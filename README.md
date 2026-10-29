@@ -86,7 +86,7 @@ build-delf.cmd
 obj\delf\TsWalk.exe <file or folder>...
 ```
 
-It reports the same 37, line for line, in 958-1078 ms with `Children` building an array per node.
+It reports the same 37, line for line, in 954-958 ms with `Children` building an array per node.
 Other approaches are being examined as well.
 
 ## See also
