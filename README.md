@@ -6,10 +6,10 @@ compiled by RAD Studio's own tools: bcc64x for the C, dcc64 for Delphi. There ar
 unless you want them, because the objects link straight into the executable with Delphi's
 `{$L}`.
 
-The repository holds only C, Delphi and C++. You don't need Node, Rust or Python to build it:
-the grammar's parser is the C that tree-sitter generated, committed here.
+The repository holds C, Delphi and C++ (and some Delf, at the end). You don't need Node, Rust
+or Python to build it: the grammar's parser is the C that tree-sitter generated, committed here.
 
-*Work in progress: the C and both programs build and agree. The project group is next.*
+*Work in progress: the C and the programs build and agree. The project group is next.*
 
 ## What's here
 
@@ -36,29 +36,51 @@ is 17 MB of generated C.
 
 ## The programs
 
-`delphi\TsWalk.dpr` and `cpp\tswalk.cpp` are the same program, one in Delphi and one in C++:
-they parse Delphi files, walk every node of the tree, and list where the grammar groups a `<`
-the way Delphi doesn't: `A + B < C` read as `A + (B < C)`, where Delphi reads `(A + B) < C`.
+One program, written three ways: it parses Delphi files, walks every node of the tree, and lists
+where the grammar groups a `<` the way Delphi doesn't: `A + B < C` read as `A + (B < C)`, where
+Delphi reads `(A + B) < C`.
 
 ```
 build-programs.cmd
-obj\TsWalk.exe     <file or folder>...
-obj\tswalk_cpp.exe <file or folder>...
+obj\TsWalk.exe     <file or folder>...      rem Delphi
+obj\tswalk_cpp.exe <file or folder>...      rem C++17
+obj\tswalk23.exe   <file or folder>...      rem C++23
 ```
 
-- **Delphi**: `TreeSitter.Api.pas` declares the C API and links the objects with `{$L}`;
-  `TreeSitter.pas` puts a parser class, a tree class and a node record over it.
-- **C++Builder**: `tswalk.cpp` includes tree-sitter's own `api.h` and links the same objects.
+- **Delphi** (`delphi\`): `TreeSitter.Api.pas` declares the C API and links the objects with
+  `{$L}`; `TreeSitter.pas` puts a parser class, a tree class and a node record over it;
+  `TsWalk.dpr` is the walker.
+- **C++17** (`cpp\tswalk.cpp`): tree-sitter's own `api.h`, the same objects.
+- **C++23** (`cpp\tswalk23.cpp`): the same again, with `std::print`, `std::expected`, ranges,
+  and the C handles owned by `std::unique_ptr`.
 
-Over the Delphi 13 RTL's `source\rtl\common` (99 files), both report the same, line for line:
+Over the Delphi 13 RTL's `source\rtl\common` (99 files), all three report the same, line for
+line:
 
 ```
-99 files, 1537727 nodes, 37 misgrouped <, 868 ms     (Delphi)
-99 files, 1537727 nodes, 37 misgrouped <, 939 ms     (C++Builder)
+99 files, 1537727 nodes, 37 misgrouped <, 853-868 ms     (Delphi)
+99 files, 1537727 nodes, 37 misgrouped <, 928-939 ms     (C++17)
+99 files, 1537727 nodes, 37 misgrouped <, 909-917 ms     (C++23)
 ```
 
-(One machine, three runs each within 1%. The 37 are the grammar's misreadings, not bugs in the
+(One machine, three to five runs each. The 37 are the grammar's misreadings, not bugs in the
 RTL: Delphi itself groups them correctly.)
+
+## And in Delf
+
+[Delf](https://github.com/pmcgee69/DelfPascal) is Delphi with a stricter, nicer type system,
+which a transpiler turns into standard Delphi. `delf\` has the walker once more, in Delf:
+`TreeSitter.Nodes.delf`, where a field that may be missing is an `Optional` and is read with
+`match`, and `TsWalk.delf`. Beside them, `delf\generated\` is the Delphi the transpiler made,
+unedited, with the one runtime unit it uses (`Delf.Optional.pas`). It uses the same
+`TreeSitter.Api.pas` and the same objects.
+
+```
+build-delf.cmd
+obj\delf\TsWalk.exe <file or folder>...
+```
+
+It reports the same 37, line for line, in 958-1078 ms: its `Children` builds an array per node.
 
 ## See also
 

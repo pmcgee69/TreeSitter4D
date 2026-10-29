@@ -1,0 +1,102 @@
+program TsWalk;
+
+(* The walker of delphi\TsWalk.dpr, in Delf: parses Delphi files with
+  tree-sitter, walks every node, and lists where the grammar groups a `<`
+  wrongly: as the right operand of a tighter operator, A + (B < C), or of
+  `not`, where Delphi reads (A + B) < C.
+
+  TsWalk <file or folder>...   (a folder: its .pas files, recursively) *)
+
+{$APPTYPE CONSOLE}
+
+uses
+  System.SysUtils, System.IOUtils, System.Diagnostics, System.RegularExpressions,
+  TreeSitter.Api, TreeSitter.Nodes;
+
+var
+  Nodes   : Int64;
+  Found   : Int64;
+  Current : string;   // the file being walked, written before its first finding
+
+function Op(const N: TSNode): string;
+begin
+  Exit( match Field(N, 'operator') of
+          | Present(O) : Kind(O)
+          | Absent     : ''
+        end );
+end;
+
+// a node's text, on one line: a line break and the indent after it become a space
+function TextOf(const P: TParsed; const N: Optional<TSNode>): string;
+begin
+  Exit( match N of
+          | Present(X) : TRegEx.Replace(Text(P, X), '[\r\n]\s*', ' ')
+          | Absent     : ''
+        end );
+end;
+
+// the adding and multiplying operators, which bind tighter than a comparison
+function Tighter(const Op: string): Boolean;
+begin
+  Exit( match Op of
+          | 'kAdd', 'kSub', 'kOr', 'kXor', 'kMul', 'kFdiv', 'kDiv', 'kMod', 'kAnd', 'kShl', 'kShr' : True
+          | _ : False
+        end );
+end;
+
+procedure Check(const P: TParsed; const N: TSNode);
+begin
+  const Unary = Kind(N) = 'exprUnary';
+  if not ( Tighter(Op(N)) or (Unary and (Op(N) = 'kNot')) ) then Exit;
+  const Inner := Field(N, if Unary then 'operand' else 'rhs');
+  if Inner is Present(R) then
+    if (Kind(R) = 'exprBinary') and (Op(R) = 'kLt') then
+    begin
+      Inc(Found);
+      if Current <> '' then
+      begin
+        Writeln(Current);
+        Current := '';
+      end;
+      const Head = if Unary then 'not' else TextOf(P, Field(N, 'lhs')) + ' ' + TextOf(P, Field(N, 'operator'));
+      const B    = TextOf(P, Field(R, 'lhs'));
+      const C    = TextOf(P, Field(R, 'rhs'));
+      Writeln(Line(N):6, '  tree-sitter: ', Head, ' (', B, ' < ', C, ')',
+              '   Delphi: (', Head, ' ', B, ') < ', C);
+    end;
+end;
+
+procedure Walk(const P: TParsed; const N: TSNode);
+begin
+  Inc(Nodes);
+  if (Kind(N) = 'exprBinary') or (Kind(N) = 'exprUnary') then Check(P, N);
+  for const C in Children(N) do Walk(P, C);
+end;
+
+procedure WalkFile(const FileName: string);
+begin
+  Current := FileName;
+  const P = Parse(TFile.ReadAllText(FileName));
+  Walk(P, Root(P));
+  Release(P);
+end;
+
+function FilesOf(const Arg: string): TArray<string>;
+begin
+  if TDirectory.Exists(Arg) then
+    Exit( TDirectory.GetFiles(Arg, '*.pas', TSearchOption.soAllDirectories) );
+  Result := [Arg];
+end;
+
+begin
+  var Files   := 0;
+  const Watch := TStopwatch.StartNew;
+  for var i := 1 to ParamCount do
+    for const F in FilesOf(ParamStr(i)) do
+    begin
+      WalkFile(F);
+      Inc(Files);
+    end;
+  Writeln(Files, ' files, ', Nodes, ' nodes, ', Found, ' misgrouped <, ',
+          Watch.ElapsedMilliseconds, ' ms');
+end.

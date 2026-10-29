@@ -1,0 +1,95 @@
+unit TreeSitter.Nodes;
+
+(* Tree-sitter from Delf: the C API is delphi\TreeSitter.Api.pas, plain Delphi
+  and unchanged. Above it, a little Delf: a field that may be missing is an
+  Optional, a node's children an array. *)
+
+interface
+
+uses
+  System.SysUtils, TreeSitter.Api, Delf.Optional;
+
+type
+  // a parsed file: its UTF-8 bytes, for the nodes' text, and the tree
+  TParsed = record
+    Bytes : TBytes;
+    Tree  : TSTree;
+  end;
+
+function Parse(const Source: string): TParsed;
+procedure Release(const P: TParsed);
+
+function Root(const P: TParsed): TSNode;
+function Kind(const N: TSNode): string;
+function Text(const P: TParsed; const N: TSNode): string;
+function Children(const N: TSNode): TArray<TSNode>;
+function Field(const N: TSNode; const Name: string): Optional<TSNode>;
+function HasError(const N: TSNode): Boolean;
+function Line(const N: TSNode): Integer;
+
+implementation
+
+var
+  Parser: TSParser;
+
+function Parse(const Source: string): TParsed;
+begin
+  if Parser = nil then
+  begin
+    Parser := ts_parser_new;
+    if not ts_parser_set_language(Parser, tree_sitter_delphi13) then
+      raise Exception.Create('tree-sitter: this runtime doesn''t take the language''s ABI version');
+  end;
+  Result.Bytes := TEncoding.UTF8.GetBytes(Source);
+  Result.Tree  := ts_parser_parse_string(Parser, nil, PAnsiChar(Result.Bytes), Length(Result.Bytes));
+end;
+
+procedure Release(const P: TParsed);
+begin
+  ts_tree_delete(P.Tree);
+end;
+
+function Root(const P: TParsed): TSNode;
+begin
+  Exit( ts_tree_root_node(P.Tree) );
+end;
+
+function Kind(const N: TSNode): string;
+begin
+  Exit( UTF8ToString(ts_node_type(N)) );
+end;
+
+function Text(const P: TParsed; const N: TSNode): string;
+begin
+  const A = ts_node_start_byte(N);
+  Exit( TEncoding.UTF8.GetString(P.Bytes, A, ts_node_end_byte(N) - A) );
+end;
+
+function Children(const N: TSNode): TArray<TSNode>;
+begin
+  SetLength(Result, ts_node_child_count(N));
+  for var i := 0 to High(Result) do Result[i] := ts_node_child(N, i);
+end;
+
+function Field(const N: TSNode; const Name: string): Optional<TSNode>;
+begin
+  const Utf8 = UTF8String(Name);
+  const F = ts_node_child_by_field_name(N, PAnsiChar(Utf8), Length(Utf8));
+  Exit( if ts_node_is_null(F) then Optional<TSNode>.Absent else Optional<TSNode>.Present(F) );
+end;
+
+function HasError(const N: TSNode): Boolean;
+begin
+  Exit( ts_node_has_error(N) );
+end;
+
+function Line(const N: TSNode): Integer;
+begin
+  Exit( ts_node_start_point(N).Row + 1 );
+end;
+
+initialization
+
+finalization
+  if Parser <> nil then ts_parser_delete(Parser);
+end.
