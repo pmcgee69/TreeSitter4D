@@ -10,7 +10,7 @@ program TsWalk;
 {$APPTYPE CONSOLE}
 
 uses
-  System.SysUtils, System.IOUtils, System.Diagnostics, System.RegularExpressions,
+  System.SysUtils, System.IOUtils, System.Diagnostics,
   TreeSitter.Api, TreeSitter.Nodes;
 
 var
@@ -20,19 +20,18 @@ var
 
 function Op(const N: TSNode): string;
 begin
-  Exit( match Field(N, 'operator') of
-          | Present(O) : Kind(O)
-          | Absent     : ''
-        end );
+  Exit( Field(N, 'operator').Map(Kind).OrDefault('') );
 end;
 
-// a node's text, on one line: a line break and the indent after it become a space
+// a node's text, on one line: each line trimmed, joined with a space
+function OneLine(const S: string): string;
+begin
+  Exit( S.Split([#13#10, #10]).Map(Trim).Join(' ') );
+end;
+
 function TextOf(const P: TParsed; const N: Optional<TSNode>): string;
 begin
-  Exit( match N of
-          | Present(X) : TRegEx.Replace(Text(P, X), '[\r\n]\s*', ' ')
-          | Absent     : ''
-        end );
+  Exit( N.Map(λX -> OneLine(Text(P, X))).OrDefault('') );
 end;
 
 // the adding and multiplying operators, which bind tighter than a comparison
@@ -89,14 +88,9 @@ begin
 end;
 
 begin
-  var Files   := 0;
   const Watch := TStopwatch.StartNew;
-  for var i := 1 to ParamCount do
-    for const F in FilesOf(ParamStr(i)) do
-    begin
-      WalkFile(F);
-      Inc(Files);
-    end;
-  Writeln(Files, ' files, ', Nodes, ' nodes, ', Found, ' misgrouped <, ',
+  const Files := Args.AndThen(FilesOf);
+  for const F in Files do WalkFile(F);
+  Writeln(Length(Files), ' files, ', Nodes, ' nodes, ', Found, ' misgrouped <, ',
           Watch.ElapsedMilliseconds, ' ms');
 end.

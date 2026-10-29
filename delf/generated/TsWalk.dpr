@@ -9,8 +9,8 @@ program TsWalk;
 
 {$APPTYPE CONSOLE}
 
-uses
-  System.SysUtils, System.IOUtils, System.Diagnostics, System.RegularExpressions,
+uses Delf.Prelude,
+  System.SysUtils, System.IOUtils, System.Diagnostics,
   TreeSitter.Api, TreeSitter.Nodes, Delf.Optional;
 
 { The else of an exhaustive match (SPEC §9.3): unreachable from Delf code, which checks every
@@ -31,32 +31,18 @@ var
 
 function Op(const N: TSNode): string;
 begin
-  var __dpp_1 := Field(N, 'operator');
-  case __dpp_1.Kind of
-    TOptionalKind.Present :
-      begin
-        const O = __dpp_1.Value;
-        Exit( Kind(O) );
-      end;
-    TOptionalKind.Absent  : Exit( '' );
-  else
-    __dpp_Unreachable('TOptionalKind', Ord(__dpp_1.Kind));
-  end;
+  Exit( TOptional.OrDefault<string>(TOptional.Map<TSNode, string>(Field(N, 'operator'), Kind), '') );
 end;
 
-// a node's text, on one line: a line break and the indent after it become a space
+// a node's text, on one line: each line trimmed, joined with a space
+function OneLine(const S: string): string;
+begin
+  Exit( TFunctions.Join(TFunctions.Map<string, string>(S.Split([#13#10, #10]), Trim), ' ') );
+end;
+
 function TextOf(const P: TParsed; const N: Optional<TSNode>): string;
 begin
-  case N.Kind of
-    TOptionalKind.Present :
-      begin
-        const X = N.Value;
-        Exit( TRegEx.Replace(Text(P, X), '[\r\n]\s*', ' ') );
-      end;
-    TOptionalKind.Absent  : Exit( '' );
-  else
-    __dpp_Unreachable('TOptionalKind', Ord(N.Kind));
-  end;
+  Exit( TOptional.OrDefault<string>(TOptional.Map<TSNode, string>(N, function(X: TSNode): string begin Result := OneLine(Text(P, X)); end), '') );
 end;
 
 // the adding and multiplying operators, which bind tighter than a comparison
@@ -121,14 +107,9 @@ begin
 end;
 
 begin
-  var Files   := 0;
   const Watch = TStopwatch.StartNew;
-  for var i := 1 to ParamCount do
-    for var F {const} in FilesOf(ParamStr(i)) do
-    begin
-      WalkFile(F);
-      Inc(Files);
-    end;
-  Writeln(Files, ' files, ', Nodes, ' nodes, ', Found, ' misgrouped <, ',
+  const Files = TFunctions.AndThen<string, string>(TFunctions.Args, FilesOf);
+  for var F {const} in Files do WalkFile(F);
+  Writeln(Length(Files), ' files, ', Nodes, ' nodes, ', Found, ' misgrouped <, ',
           Watch.ElapsedMilliseconds, ' ms');
 end.

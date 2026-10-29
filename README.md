@@ -68,9 +68,17 @@ The 37 are the grammar's misreadings, not bugs in the RTL. Delphi groups them co
 
 [Delf](https://github.com/pmcgee69/DelfPascal) is Delphi with a stricter, nicer type system,
 which a transpiler turns into standard Delphi. `delf\` has the walker once more, in Delf:
-`TreeSitter.Nodes.delf`, where a field that may be missing is an `Optional` and is read with
-`match`, and `TsWalk.delf`. Beside them, `delf\generated\` is the Delphi the transpiler made,
-unedited, with the one runtime unit it uses (`Delf.Optional.pas`). It uses the same
+`TreeSitter.Nodes.delf`, where a field that may be missing is an `Optional`, and `TsWalk.delf`,
+written in Delf's fluent style:
+
+```pascal
+Exit( Field(N, 'operator').Map(Kind).OrDefault('') );
+Exit( S.Split([#13#10, #10]).Map(Trim).Join(' ') );
+const Files := Args.AndThen(FilesOf);
+```
+
+Beside them, `delf\generated\` is the Delphi the transpiler made, unedited, with the runtime
+units it uses (`Delf.Optional.pas`, `Delf.Prelude.pas`, `Delf.Tuples.pas`). It uses the same
 `TreeSitter.Api.pas` and the same objects.
 
 ```
