@@ -9,7 +9,7 @@ unless you want them, because the objects link straight into the executable with
 The repository holds only C, Delphi and C++. You don't need Node, Rust or Python to build it:
 the grammar's parser is the C that tree-sitter generated, committed here.
 
-*Work in progress: the C side builds. The Delphi and C++Builder programs are next.*
+*Work in progress: the C and both programs build and agree. The project group is next.*
 
 ## What's here
 
@@ -33,6 +33,32 @@ build-c.cmd dll      rem also obj\tree-sitter.dll and obj\tree-sitter-delphi13.d
 
 Tested with bcc64x 7.80 (C++Builder 13, Clang 20). It takes about ten seconds; the grammar
 is 17 MB of generated C.
+
+## The programs
+
+`delphi\TsWalk.dpr` and `cpp\tswalk.cpp` are the same program, one in Delphi and one in C++:
+they parse Delphi files, walk every node of the tree, and list where the grammar groups a `<`
+the way Delphi doesn't: `A + B < C` read as `A + (B < C)`, where Delphi reads `(A + B) < C`.
+
+```
+build-programs.cmd
+obj\TsWalk.exe     <file or folder>...
+obj\tswalk_cpp.exe <file or folder>...
+```
+
+- **Delphi**: `TreeSitter.Api.pas` declares the C API and links the objects with `{$L}`;
+  `TreeSitter.pas` puts a parser class, a tree class and a node record over it.
+- **C++Builder**: `tswalk.cpp` includes tree-sitter's own `api.h` and links the same objects.
+
+Over the Delphi 13 RTL's `source\rtl\common` (99 files), both report the same, line for line:
+
+```
+99 files, 1537727 nodes, 37 misgrouped <, 868 ms     (Delphi)
+99 files, 1537727 nodes, 37 misgrouped <, 939 ms     (C++Builder)
+```
+
+(One machine, three runs each within 1%. The 37 are the grammar's misreadings, not bugs in the
+RTL: Delphi itself groups them correctly.)
 
 ## See also
 
