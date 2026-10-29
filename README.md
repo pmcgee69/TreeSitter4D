@@ -1,15 +1,15 @@
 # TreeSitter4D
 
 [Tree-sitter](https://github.com/tree-sitter/tree-sitter), the incremental parsing library, built
-with **C++Builder** and used from **Delphi** and **C++Builder** programs. Everything is
-compiled by RAD Studio's own tools: bcc64x for the C, dcc64 for Delphi. There are no DLLs
-unless you want them, because the objects link straight into the executable with Delphi's
+with **C++Builder** and used from **Delphi** and **C++Builder** programs. 
+
+Everything is compiled by RAD Studio's own tools: bcc64x for the C, dcc64 for Delphi. 
+
+There are no DLLs unless you want them, because the objects link straight into the executable with Delphi's
 `{$L}`.
 
-The repository holds C, Delphi and C++ (and some Delf, at the end). You don't need Node, Rust
-or Python to build it: the grammar's parser is the C that tree-sitter generated, committed here.
-
-*Work in progress: the C and the programs build and agree. The project group is next.*
+The repository holds C, Delphi and C++ (and [Delf](https://github.com/pmcgee69/delfpascal)). 
+You don't need Node, Rust or Python to build it: the grammar's parser is the C that tree-sitter generated, committed here.
 
 ## What's here
 
@@ -18,9 +18,8 @@ or Python to build it: the grammar's parser is the C that tree-sitter generated,
 | `c/tree-sitter` | the runtime (`src/`, `include/`) | [tree-sitter/tree-sitter](https://github.com/tree-sitter/tree-sitter), MIT | v0.25.10, `da6fe9beb4f7f67beb75914ca8e0d48ae48d6406` |
 | `c/tree-sitter-delphi13` | a Delphi 13 grammar, generated (`parser.c`, `scanner.c`) | [Alexl-git/tree-sitter-delphi13](https://github.com/Alexl-git/tree-sitter-delphi13), MIT | v1.3.0 |
 
-Each folder keeps its project's `LICENSE`. The runtime's `src/wasm` folder is left out: it is
-only compiled with `TREE_SITTER_FEATURE_WASM`. `c/tree-sitter/exports.def` lists the API's
-functions, for building `tree-sitter.dll`.
+Each folder keeps its project's `LICENSE`.  
+`c/tree-sitter/exports.def` lists the API's functions, for building `tree-sitter.dll`.
 
 ## Building the C
 
@@ -37,8 +36,8 @@ is 17 MB of generated C.
 ## The programs
 
 One program, written three ways: it parses Delphi files, walks every node of the tree, and lists
-where the grammar groups a `<` the way Delphi doesn't: `A + B < C` read as `A + (B < C)`, where
-Delphi reads `(A + B) < C`.
+where the grammar fails by grouping a `<` in opposition to the way Delphi does: 
+`A + B < C` read as `A + (B < C)`, vs Delphi's `(A + B) < C`.
 
 ```
 build-programs.cmd
@@ -51,8 +50,8 @@ obj\tswalk23.exe   <file or folder>...      rem C++23
   `{$L}`; `TreeSitter.pas` puts a parser class, a tree class and a node record over it;
   `TsWalk.dpr` is the walker.
 - **C++17** (`cpp\tswalk.cpp`): tree-sitter's own `api.h`, the same objects.
-- **C++23** (`cpp\tswalk23.cpp`): the same again, with `std::print`, `std::expected`, ranges,
-  and the C handles owned by `std::unique_ptr`.
+- **C++23** (`cpp\tswalk23.cpp`): same, using `std::print`, `std::expected`, ranges,
+  and `std::unique_ptr` for C handle ownership.
 
 Over the Delphi 13 RTL's `source\rtl\common` (99 files), all three report the same, line for
 line:
@@ -63,8 +62,7 @@ line:
 99 files, 1537727 nodes, 37 misgrouped <, 909-917 ms     (C++23)
 ```
 
-(One machine, three to five runs each. The 37 are the grammar's misreadings, not bugs in the
-RTL: Delphi itself groups them correctly.)
+The 37 are the grammar's misreadings, not bugs in the RTL. Delphi groups them correctly, by definition.
 
 ## And in Delf
 
@@ -80,7 +78,8 @@ build-delf.cmd
 obj\delf\TsWalk.exe <file or folder>...
 ```
 
-It reports the same 37, line for line, in 958-1078 ms: its `Children` builds an array per node.
+It reports the same 37, line for line, in 958-1078 ms with `Children` building an array per node.
+Other approaches are being examined as well.
 
 ## See also
 
