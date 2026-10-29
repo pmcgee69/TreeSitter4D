@@ -1,0 +1,9 @@
+obj/
+*.exe
+*.dcu
+*.o
+*.dll
+__history/
+__recovery/
+*.local
+*.identcache
