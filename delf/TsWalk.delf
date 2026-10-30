@@ -91,27 +91,49 @@ begin
   Result := [Arg];
 end;
 
-(* The loop as it was first written, in plain Delphi's style:
+(* The main loop, earlier versions. *)
 
-    var Files   := 0;
+(* 1. As first written, in plain Delphi's style:
+
+    procedure WalkFile(const FileName: string);
+    …
+    var Files := 0;
     for var i := 1 to ParamCount do
       for const F in ToFiles(ParamStr(i)) do
       begin
         WalkFile(F);
         Inc(Files);
       end;
+*)
 
-  Then as a fold, WalkFile taking the count in and giving one more out:
+(* 2. The library's Args and AndThen, the count from the array:
+
+    procedure WalkFile(const FileName: string);
+    …
+    const Files := Args.AndThen(ToFiles);
+    for const F in Files do WalkFile(F);
+    Writeln(Length(Files), ' files, ', …
+*)
+
+(* 3. A fold, WalkFile taking the count in and giving one more out:
 
     function WalkFile(const Count: Integer; const Fn: string): Integer;
     …
+    var Count := 0;
     for const Fn in Args.AndThen(ToFiles) do Count := WalkFile(Count, Fn);
+*)
+
+(* 4. WalkFile saying whether it walked, the loop counting:
+
+    function WalkFile(const Fn: string): Boolean;
+    …
+    var Count := 0;
+    for const Fn in Args.AndThen(ToFiles) do if WalkFile(Fn) then Inc(Count);
 *)
 
 begin
   const Watch := TStopwatch.StartNew;
-  var Count := 0;
-  for const Fn in Args.AndThen(ToFiles) do if WalkFile(Fn) then Inc(Count);
+  const Count := Args.AndThen(ToFiles).Filter(WalkFile).Length;
   Writeln(Count, ' files, ', Nodes, ' nodes, ', Found, ' misgrouped <, ',
           Watch.ElapsedMilliseconds, ' ms');
 end.
