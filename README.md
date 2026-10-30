@@ -89,6 +89,35 @@ obj\delf\TsWalk.exe <file or folder>...
 It reports the same 37, line for line, in 954-958 ms with `Children` building an array per node.
 Other approaches are being examined as well.
 
+## Building the two Delphi walkers with Delphi alone
+
+Both walkers are ordinary Delphi programs. The Delf one is Delphi too: `delf\generated\`
+holds everything it needs, so building it takes no Delf tools, only dcc64. Both need the C
+objects first (`build-c.cmd`, above), which `TreeSitter.Api.pas` links with
+`{$L ..\obj\*.o}`.
+
+The hand-written walker:
+
+```
+cd delphi
+dcc64 -B -E..\obj -NU..\obj\dcu "-NSSystem;Winapi" TsWalk.dpr
+```
+
+The Delf walker, from delfc's output: the same, plus `-U` for `TreeSitter.Api.pas`, which it
+shares with the hand-written one:
+
+```
+cd delf\generated
+dcc64 -B -E..\..\obj\delf -NU..\..\obj\dcu-delf "-NSSystem;Winapi" -U..\..\delphi TsWalk.dpr
+```
+
+(Create `obj\dcu` and `obj\dcu-delf` first, or leave out `-NU` to put the `.dcu` files beside
+the sources.) `build-programs.cmd` and `build-delf.cmd` run exactly these.
+
+In the IDE: open either `TsWalk.dpr`, choose the Windows 64-bit platform, and for the Delf
+walker add `..\..\delphi` to the project's search path. (Not tried yet; a project group is
+planned.)
+
 ## Credits
 
 - The Delphi grammar is originally from
