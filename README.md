@@ -89,6 +89,16 @@ obj\delf\TsWalk.exe <file or folder>...
 It reports the same 37, line for line, in 954-958 ms with `Children` building an array per node.
 Other approaches are being examined as well.
 
+## Credits
+
+- The Delphi grammar is originally from
+  [Alexl-git/tree-sitter-delphi13](https://github.com/Alexl-git/tree-sitter-delphi13), by
+  Alexander Liberov (MIT), itself derived in part from
+  [Isopod/tree-sitter-pascal](https://github.com/Isopod/tree-sitter-pascal) by Philip Zander
+  and Benjamin Gray (MIT).
+- [tree-sitter](https://github.com/tree-sitter/tree-sitter), by Max Brunsfeld and its
+  contributors (MIT).
+
 ## See also
 
 - [modersohn/delphi-tree-sitter](https://github.com/modersohn/delphi-tree-sitter): a fuller
