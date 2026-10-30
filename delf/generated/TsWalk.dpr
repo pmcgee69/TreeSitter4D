@@ -25,6 +25,7 @@ end;
 
 
 var
+  Walked  : Integer;
   Nodes   : Int64;
   Found   : Int64;
   Current : string;   // the file being walked, written before its first finding
@@ -93,6 +94,7 @@ end;
 
 procedure WalkFile(const FileName: string);
 begin
+  Inc(Walked);
   Current := FileName;
   const P = Parse(TFile.ReadAllText(FileName));
   Walk(P, Root(P));
@@ -106,10 +108,21 @@ begin
   Result := [Arg];
 end;
 
+(* The loop as it was first written, in plain Delphi's style:
+
+    var Files   := 0;
+    const Watch := TStopwatch.StartNew;
+    for var i := 1 to ParamCount do
+      for const F in FilesOf(ParamStr(i)) do
+      begin
+        WalkFile(F);
+        Inc(Files);
+      end;
+*)
+
 begin
   const Watch = TStopwatch.StartNew;
-  const Files = TFunctions.AndThen<string, string>(TFunctions.Args, FilesOf);
-  for var F {const} in Files do WalkFile(F);
-  Writeln(Length(Files), ' files, ', Nodes, ' nodes, ', Found, ' misgrouped <, ',
+  for var FileName {const} in TFunctions.AndThen<string, string>(TFunctions.Args, FilesOf) do WalkFile(FileName);
+  Writeln(Walked, ' files, ', Nodes, ' nodes, ', Found, ' misgrouped <, ',
           Watch.ElapsedMilliseconds, ' ms');
 end.

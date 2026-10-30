@@ -74,7 +74,7 @@ written in Delf's fluent style:
 ```pascal
 Exit( Field(N, 'operator').Map(Kind).OrDefault('') );
 Exit( S.Split([#13#10, #10]).Map(Trim).Join(' ') );
-const Files := Args.AndThen(FilesOf);
+for const FileName in Args.AndThen(FilesOf) do WalkFile(FileName);
 ```
 
 Beside them, `delf\generated\` is the Delphi the transpiler made, unedited, with the runtime
