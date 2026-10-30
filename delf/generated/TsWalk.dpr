@@ -24,6 +24,10 @@ begin
 end;
 
 
+const
+  CRLF = #13#10;   // the RTL has only sLineBreak, which is #10 on POSIX
+  LF   = #10;
+
 var
   Nodes   : Int64;
   Found   : Int64;
@@ -37,7 +41,7 @@ end;
 // a node's text, on one line: each line trimmed, joined with a space
 function OneLine(const S: string): string;
 begin
-  Exit( TFunctions.Join(TFunctions.Map<string, string>(S.Split([#13#10, #10]), Trim), ' ') );
+  Exit( TFunctions.Join(TFunctions.Map<string, string>(S.Split([CRLF, LF]), Trim), ' ') );
 end;
 
 function ToString(const P: TParsed; const N: Optional<TSNode>): string;

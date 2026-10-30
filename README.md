@@ -73,7 +73,7 @@ written in Delf's fluent style:
 
 ```pascal
 Exit( Field(N, 'operator').Map(Kind).OrDefault('') );
-Exit( S.Split([#13#10, #10]).Map(Trim).Join(' ') );
+Exit( S.Split([CRLF, LF]).Map(Trim).Join(' ') );
 const Count := Args.AndThen(ToFiles).Filter(WalkFile).Length;
 ```
 
