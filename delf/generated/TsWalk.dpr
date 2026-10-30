@@ -101,7 +101,7 @@ begin
   Exit( Count + 1 );
 end;
 
-function FilesOf(const Arg: string): TArray<string>;
+function ToFiles(const Arg: string): TArray<string>;
 begin
   if TDirectory.Exists(Arg) then
     Exit( TDirectory.GetFiles(Arg, '*.pas', TSearchOption.soAllDirectories) );
@@ -112,7 +112,7 @@ end;
 
     var Files   := 0;
     for var i := 1 to ParamCount do
-      for const F in FilesOf(ParamStr(i)) do
+      for const F in ToFiles(ParamStr(i)) do
       begin
         WalkFile(F);
         Inc(Files);
@@ -122,7 +122,7 @@ end;
 begin
   const Watch = TStopwatch.StartNew;
   var Count := 0;
-  for var Fn {const} in TFunctions.AndThen<string, string>(TFunctions.Args, FilesOf) do Count := WalkFile(Count, Fn);
+  for var Fn {const} in TFunctions.AndThen<string, string>(TFunctions.Args, ToFiles) do Count := WalkFile(Count, Fn);
   Writeln(Count, ' files, ', Nodes, ' nodes, ', Found, ' misgrouped <, ',
           Watch.ElapsedMilliseconds, ' ms');
 end.
