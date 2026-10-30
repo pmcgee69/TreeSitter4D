@@ -79,7 +79,10 @@ const Count := Args.AndThen(ToFiles).Filter(WalkFile).Length;
 
 Beside them, `delf\generated\` is the Delphi the transpiler made, unedited, with the runtime
 units it uses (`Delf.Optional.pas`, `Delf.Prelude.pas`, `Delf.Tuples.pas`). It uses the same
-`TreeSitter.Api.pas` and the same objects.
+`TreeSitter.Api.pas` and the same objects. It was made by delfc, from `delf\`, with
+`-U ..\delphi` so the transpiler can read `TreeSitter.Api.pas` as dcc64 does:
+`delfc -U ..\delphi -o generated\TsWalk.dpr TsWalk.delf`. Building it needs only Delphi
+(below).
 
 ```
 build-delf.cmd

@@ -49,11 +49,11 @@ end;
 
 procedure Check(const P: TParsed; const N: TSNode);
 begin
-  const Unary = Kind(N) = 'exprUnary';
-  if not ( Tighter(Op(N)) or (Unary and (Op(N) = 'kNot')) ) then Exit;
+  const Unary = N.Kind = 'exprUnary';
+  if not ( Tighter(N.Op) or (Unary and (N.Op = 'kNot')) ) then Exit;
   const Inner := Field(N, if Unary then 'operand' else 'rhs');
   if Inner is Present(R) then
-    if (Kind(R) = 'exprBinary') and (Op(R) = 'kLt') then
+    if (R.Kind = 'exprBinary') and (R.Op = 'kLt') then
     begin
       Inc(Found);
       if Current <> '' then
@@ -72,7 +72,7 @@ end;
 procedure Walk(const P: TParsed; const N: TSNode);
 begin
   Inc(Nodes);
-  if (Kind(N) = 'exprBinary') or (Kind(N) = 'exprUnary') then Check(P, N);
+  if (N.Kind = 'exprBinary') or (N.Kind = 'exprUnary') then Check(P, N);
   for const C in Children(N) do Walk(P, C);
 end;
 

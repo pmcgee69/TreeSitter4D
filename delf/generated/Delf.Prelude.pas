@@ -45,12 +45,21 @@ unit Delf.Prelude;
     (user: overloads, not wrappers; Delf.Optional.pas, TConstFunc); Enumerate,
     each element with its index from 0, as a tuple; Join for strings; Args, the
     command line's arguments. Called through TFunctions: Lines.Map(Trim) is
-    TFunctions.Map<string, string>(Lines, Trim). }
+    TFunctions.Map<string, string>(Lines, Trim).
+
+  - Searching and summing an array (30 Oct; user: "proceed as you think on
+    Arrays", after Willi Commer's ArrayHelper, docs/library.md): Find, the
+    first element a test passes; IndexOf, where a value first is; Contains;
+    Count, how many pass a test; Min and Max; Sum for Integer, Int64 and
+    Double. Read-only, every one, and where ArrayHelper answers -1, these
+    answer an Optional: Absent for not found, and for the Min or Max of an
+    empty array. Equality and order are the RTL's defaults for T
+    (TEqualityComparer<T>.Default, TComparer<T>.Default). }
 
 interface
 
 uses
-  System.SysUtils, System.Types, Delf.Optional, Delf.Tuples;
+  System.SysUtils, System.Types, System.Generics.Defaults, Delf.Optional, Delf.Tuples;
 
 type
   TFunctions = record
@@ -65,6 +74,18 @@ type
     class function Enumerate<T>(const Xs: TArray<T>): TArray<TTuple<Integer, T>>; static;
     class function Join(const Xs: TArray<string>; const Sep: string): string; static;
     class function Args: TArray<string>; static;
+
+    class function Find<T>(const Xs: TArray<T>; const P: TFunc<T, Boolean>): Optional<T>; overload; static;
+    class function Find<T>(const Xs: TArray<T>; const P: TConstFunc<T, Boolean>): Optional<T>; overload; static;
+    class function IndexOf<T>(const Xs: TArray<T>; const X: T): Optional<Integer>; static;
+    class function Contains<T>(const Xs: TArray<T>; const X: T): Boolean; static;
+    class function Count<T>(const Xs: TArray<T>; const P: TFunc<T, Boolean>): Integer; overload; static;
+    class function Count<T>(const Xs: TArray<T>; const P: TConstFunc<T, Boolean>): Integer; overload; static;
+    class function Min<T>(const Xs: TArray<T>): Optional<T>; static;
+    class function Max<T>(const Xs: TArray<T>): Optional<T>; static;
+    class function Sum(const Xs: TArray<Integer>): Integer; overload; static;
+    class function Sum(const Xs: TArray<Int64>): Int64; overload; static;
+    class function Sum(const Xs: TArray<Double>): Double; overload; static;
   end;
 
   // an array of Length elements, each Fill (user, 23 Oct). Not TArray<T>.Create:
@@ -117,16 +138,32 @@ begin
   for var X in Xs do Result := Result + F(X);
 end;
 
+// the result is sized once and cut to what passed (30 Oct: it grew by one
+// element at a time, a reallocation per element kept)
 class function TFunctions.Filter<T>(const Xs: TArray<T>; const P: TFunc<T, Boolean>): TArray<T>;
 begin
-  Result := [];
-  for var X in Xs do if P(X) then Result := Result + [X];
+  SetLength(Result, Length(Xs));
+  var N := 0;
+  for var X in Xs do
+    if P(X) then
+    begin
+      Result[N] := X;
+      Inc(N);
+    end;
+  SetLength(Result, N);
 end;
 
 class function TFunctions.Filter<T>(const Xs: TArray<T>; const P: TConstFunc<T, Boolean>): TArray<T>;
 begin
-  Result := [];
-  for var X in Xs do if P(X) then Result := Result + [X];
+  SetLength(Result, Length(Xs));
+  var N := 0;
+  for var X in Xs do
+    if P(X) then
+    begin
+      Result[N] := X;
+      Inc(N);
+    end;
+  SetLength(Result, N);
 end;
 
 class function TFunctions.Enumerate<T>(const Xs: TArray<T>): TArray<TTuple<Integer, T>>;
@@ -144,6 +181,85 @@ class function TFunctions.Args: TArray<string>;
 begin
   SetLength(Result, ParamCount);
   for var i := 1 to ParamCount do Result[i - 1] := ParamStr(i);
+end;
+
+class function TFunctions.Find<T>(const Xs: TArray<T>; const P: TFunc<T, Boolean>): Optional<T>;
+begin
+  for var X in Xs do
+    if P(X) then Exit( Optional<T>.Present(X) );
+  Exit( Optional<T>.Absent );
+end;
+
+class function TFunctions.Find<T>(const Xs: TArray<T>; const P: TConstFunc<T, Boolean>): Optional<T>;
+begin
+  for var X in Xs do
+    if P(X) then Exit( Optional<T>.Present(X) );
+  Exit( Optional<T>.Absent );
+end;
+
+class function TFunctions.IndexOf<T>(const Xs: TArray<T>; const X: T): Optional<Integer>;
+begin
+  const Eq = TEqualityComparer<T>.Default;
+  for var i := 0 to High(Xs) do
+    if Eq.Equals(Xs[i], X) then Exit( Optional<Integer>.Present(i) );
+  Exit( Optional<Integer>.Absent );
+end;
+
+class function TFunctions.Contains<T>(const Xs: TArray<T>; const X: T): Boolean;
+begin
+  Exit( IndexOf<T>(Xs, X).Kind = TOptionalKind.Present );
+end;
+
+class function TFunctions.Count<T>(const Xs: TArray<T>; const P: TFunc<T, Boolean>): Integer;
+begin
+  Result := 0;
+  for var X in Xs do
+    if P(X) then Inc(Result);
+end;
+
+class function TFunctions.Count<T>(const Xs: TArray<T>; const P: TConstFunc<T, Boolean>): Integer;
+begin
+  Result := 0;
+  for var X in Xs do
+    if P(X) then Inc(Result);
+end;
+
+class function TFunctions.Min<T>(const Xs: TArray<T>): Optional<T>;
+begin
+  if Length(Xs) = 0 then Exit( Optional<T>.Absent );
+  const Cmp = TComparer<T>.Default;
+  var M := Xs[0];
+  for var i := 1 to High(Xs) do
+    if Cmp.Compare(Xs[i], M) < 0 then M := Xs[i];
+  Exit( Optional<T>.Present(M) );
+end;
+
+class function TFunctions.Max<T>(const Xs: TArray<T>): Optional<T>;
+begin
+  if Length(Xs) = 0 then Exit( Optional<T>.Absent );
+  const Cmp = TComparer<T>.Default;
+  var M := Xs[0];
+  for var i := 1 to High(Xs) do
+    if Cmp.Compare(Xs[i], M) > 0 then M := Xs[i];
+  Exit( Optional<T>.Present(M) );
+end;
+
+class function TFunctions.Sum(const Xs: TArray<Integer>): Integer;
+begin
+  Result := 0;
+  for var X in Xs do Inc(Result, X);
+end;
+
+class function TFunctions.Sum(const Xs: TArray<Int64>): Int64;
+begin
+  Result := 0;
+  for var X in Xs do Inc(Result, X);
+end;
+
+class function TFunctions.Sum(const Xs: TArray<Double>): Double;
+begin
+  Result := 0;
+  for var X in Xs do Result := Result + X;
 end;
 
 class function TInitArray<T>.Create(Length: Integer; const Fill: T): TArray<T>;
