@@ -114,9 +114,19 @@ dcc64 -B -E..\..\obj\delf -NU..\..\obj\dcu-delf "-NSSystem;Winapi" -U..\..\delph
 (Create `obj\dcu` and `obj\dcu-delf` first, or leave out `-NU` to put the `.dcu` files beside
 the sources.) `build-programs.cmd` and `build-delf.cmd` run exactly these.
 
-In the IDE: open either `TsWalk.dpr`, choose the Windows 64-bit platform, and for the Delf
-walker add `..\..\delphi` to the project's search path. (Not tried yet; a project group is
-planned.)
+### In the IDE
+
+Open **`TreeSitter4D.groupproj`**: the four walkers in one project group, the two Delphi
+projects (Win64) and the two C++Builder ones (Win64x, C++17 and C++23), building into the same
+`obj\` folders as the scripts, in Release by default. Each runs `build-c.cmd` first if the C
+objects aren't there yet, so **Build All** works from a fresh clone. The same from a RAD Studio
+command prompt:
+
+```
+msbuild TreeSitter4D.groupproj
+```
+
+(Tried from an empty `obj\`: the C objects, then all four walkers, which report the same 37.)
 
 ## Credits
 

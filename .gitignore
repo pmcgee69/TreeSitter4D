@@ -7,3 +7,7 @@ __history/
 __recovery/
 *.local
 *.identcache
+*.res
+*.dsk
+*.stat
+*.tvsconfig

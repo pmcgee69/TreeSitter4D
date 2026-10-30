@@ -1,0 +1,72 @@
+<Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+    <PropertyGroup>
+        <ProjectGuid>{1B44786D-4F88-4CE9-8A83-E565FBCE25EE}</ProjectGuid>
+    </PropertyGroup>
+    <ItemGroup>
+        <Projects Include="delphi\TsWalk.dproj">
+            <Dependencies/>
+        </Projects>
+        <Projects Include="delf\generated\TsWalk.dproj">
+            <Dependencies/>
+        </Projects>
+        <Projects Include="cpp\tswalk_cpp.cbproj">
+            <Dependencies/>
+        </Projects>
+        <Projects Include="cpp\tswalk23.cbproj">
+            <Dependencies/>
+        </Projects>
+    </ItemGroup>
+    <ProjectExtensions>
+        <Borland.Personality>Default.Personality.12</Borland.Personality>
+        <Borland.ProjectType/>
+        <BorlandProject>
+            <Default.Personality/>
+        </BorlandProject>
+    </ProjectExtensions>
+    <Target Name="TsWalk_Delphi">
+        <MSBuild Projects="delphi\TsWalk.dproj"/>
+    </Target>
+    <Target Name="TsWalk_Delphi:Clean">
+        <MSBuild Projects="delphi\TsWalk.dproj" Targets="Clean"/>
+    </Target>
+    <Target Name="TsWalk_Delphi:Make">
+        <MSBuild Projects="delphi\TsWalk.dproj" Targets="Make"/>
+    </Target>
+    <Target Name="TsWalk_Delf">
+        <MSBuild Projects="delf\generated\TsWalk.dproj"/>
+    </Target>
+    <Target Name="TsWalk_Delf:Clean">
+        <MSBuild Projects="delf\generated\TsWalk.dproj" Targets="Clean"/>
+    </Target>
+    <Target Name="TsWalk_Delf:Make">
+        <MSBuild Projects="delf\generated\TsWalk.dproj" Targets="Make"/>
+    </Target>
+    <Target Name="tswalk_cpp">
+        <MSBuild Projects="cpp\tswalk_cpp.cbproj"/>
+    </Target>
+    <Target Name="tswalk_cpp:Clean">
+        <MSBuild Projects="cpp\tswalk_cpp.cbproj" Targets="Clean"/>
+    </Target>
+    <Target Name="tswalk_cpp:Make">
+        <MSBuild Projects="cpp\tswalk_cpp.cbproj" Targets="Make"/>
+    </Target>
+    <Target Name="tswalk23">
+        <MSBuild Projects="cpp\tswalk23.cbproj"/>
+    </Target>
+    <Target Name="tswalk23:Clean">
+        <MSBuild Projects="cpp\tswalk23.cbproj" Targets="Clean"/>
+    </Target>
+    <Target Name="tswalk23:Make">
+        <MSBuild Projects="cpp\tswalk23.cbproj" Targets="Make"/>
+    </Target>
+    <Target Name="Build">
+        <CallTarget Targets="TsWalk_Delphi;TsWalk_Delf;tswalk_cpp;tswalk23"/>
+    </Target>
+    <Target Name="Clean">
+        <CallTarget Targets="TsWalk_Delphi:Clean;TsWalk_Delf:Clean;tswalk_cpp:Clean;tswalk23:Clean"/>
+    </Target>
+    <Target Name="Make">
+        <CallTarget Targets="TsWalk_Delphi:Make;TsWalk_Delf:Make;tswalk_cpp:Make;tswalk23:Make"/>
+    </Target>
+    <Import Project="$(BDS)\Bin\CodeGear.Group.Targets" Condition="Exists('$(BDS)\Bin\CodeGear.Group.Targets')"/>
+</Project>
