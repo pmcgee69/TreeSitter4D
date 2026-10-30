@@ -72,14 +72,16 @@ begin
   for const C in Children(N) do Walk(P, C);
 end;
 
-// walks one file; the count of files walked comes in and goes out one more
-function WalkFile(const Count: Integer; const Fn: string): Integer;
+// walks one file, if there is one: an argument that is neither a folder nor a
+// file is skipped, and not counted
+function WalkFile(const Fn: string): Boolean;
 begin
+  if not TFile.Exists(Fn) then Exit( False );
   Current := Fn;
   const P = Parse(TFile.ReadAllText(Fn));
   Walk(P, Root(P));
   Release(P);
-  Exit( Count + 1 );
+  Exit( True );
 end;
 
 function ToFiles(const Arg: string): TArray<string>;
@@ -98,12 +100,18 @@ end;
         WalkFile(F);
         Inc(Files);
       end;
+
+  Then as a fold, WalkFile taking the count in and giving one more out:
+
+    function WalkFile(const Count: Integer; const Fn: string): Integer;
+    …
+    for const Fn in Args.AndThen(ToFiles) do Count := WalkFile(Count, Fn);
 *)
 
 begin
   const Watch := TStopwatch.StartNew;
   var Count := 0;
-  for const Fn in Args.AndThen(ToFiles) do Count := WalkFile(Count, Fn);
+  for const Fn in Args.AndThen(ToFiles) do if WalkFile(Fn) then Inc(Count);
   Writeln(Count, ' files, ', Nodes, ' nodes, ', Found, ' misgrouped <, ',
           Watch.ElapsedMilliseconds, ' ms');
 end.
