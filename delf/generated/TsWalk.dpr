@@ -25,7 +25,6 @@ end;
 
 
 var
-  Walked  : Integer;
   Nodes   : Int64;
   Found   : Int64;
   Current : string;   // the file being walked, written before its first finding
@@ -41,7 +40,7 @@ begin
   Exit( TFunctions.Join(TFunctions.Map<string, string>(S.Split([#13#10, #10]), Trim), ' ') );
 end;
 
-function TextOf(const P: TParsed; const N: Optional<TSNode>): string;
+function ToString(const P: TParsed; const N: Optional<TSNode>): string;
 begin
   Exit( TOptional.OrDefault<string>(TOptional.Map<TSNode, string>(N, function(X: TSNode): string begin Result := OneLine(Text(P, X)); end), '') );
 end;
@@ -72,9 +71,9 @@ begin
             Writeln(Current);
             Current := '';
           end;
-          const Head = if Unary then 'not' else TextOf(P, Field(N, 'lhs')) + ' ' + TextOf(P, Field(N, 'operator'));
-          const B    = TextOf(P, Field(R, 'lhs'));
-          const C    = TextOf(P, Field(R, 'rhs'));
+          const Head = if Unary then 'not' else ToString(P, Field(N, 'lhs')) + ' ' + ToString(P, Field(N, 'operator'));
+          const B    = ToString(P, Field(R, 'lhs'));
+          const C    = ToString(P, Field(R, 'rhs'));
           Writeln(Line(N):6, '  tree-sitter: ', Head, ' (', B, ' < ', C, ')',
                   '   Delphi: (', Head, ' ', B, ') < ', C);
         end;
@@ -92,13 +91,14 @@ begin
   for var C {const} in Children(N) do Walk(P, C);
 end;
 
-procedure WalkFile(const FileName: string);
+// walks one file; the count of files walked comes in and goes out one more
+function WalkFile(const Count: Integer; const Fn: string): Integer;
 begin
-  Inc(Walked);
-  Current := FileName;
-  const P = Parse(TFile.ReadAllText(FileName));
+  Current := Fn;
+  const P = Parse(TFile.ReadAllText(Fn));
   Walk(P, Root(P));
   Release(P);
+  Exit( Count + 1 );
 end;
 
 function FilesOf(const Arg: string): TArray<string>;
@@ -111,7 +111,6 @@ end;
 (* The loop as it was first written, in plain Delphi's style:
 
     var Files   := 0;
-    const Watch := TStopwatch.StartNew;
     for var i := 1 to ParamCount do
       for const F in FilesOf(ParamStr(i)) do
       begin
@@ -122,7 +121,8 @@ end;
 
 begin
   const Watch = TStopwatch.StartNew;
-  for var FileName {const} in TFunctions.AndThen<string, string>(TFunctions.Args, FilesOf) do WalkFile(FileName);
-  Writeln(Walked, ' files, ', Nodes, ' nodes, ', Found, ' misgrouped <, ',
+  var Count := 0;
+  for var Fn {const} in TFunctions.AndThen<string, string>(TFunctions.Args, FilesOf) do Count := WalkFile(Count, Fn);
+  Writeln(Count, ' files, ', Nodes, ' nodes, ', Found, ' misgrouped <, ',
           Watch.ElapsedMilliseconds, ' ms');
 end.
