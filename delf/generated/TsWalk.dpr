@@ -78,7 +78,8 @@ end;
 procedure Check(const P: TParsed; const N: TSNode);
 begin
   const Unary = Kind(N) = 'exprUnary';
-  if not ( Tighter(Op(N)) or (Unary and (Op(N) = 'kNot')) ) then Exit;
+  const O = Op(N);
+  if not ( Tighter(O) or (Unary and (O = 'kNot')) ) then Exit;
   const Inner = Field(N, if Unary then 'operand' else 'rhs');
   case Inner.Kind of
     TOptionalKind.Present :
@@ -107,7 +108,8 @@ end;
 procedure Walk(const P: TParsed; const N: TSNode);
 begin
   Inc(Nodes);
-  if (Kind(N) = 'exprBinary') or (Kind(N) = 'exprUnary') then Check(P, N);
+  const K = Kind(N);
+  if (K = 'exprBinary') or (K = 'exprUnary') then Check(P, N);
   for var C {const} in Children(N) do Walk(P, C);
 end;
 
