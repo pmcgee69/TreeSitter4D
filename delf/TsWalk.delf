@@ -55,7 +55,7 @@ begin
      not (Unary and (O = 'kNot')) then Exit;
 
   const InnerOpt := Node.Field(if Unary then UTF8('operand') 
-                                  else UTF8('rhs'));
+                                        else UTF8('rhs'));
   if InnerOpt is Present(InNode) then
     if (InNode.Kind, InNode.Op) is ('exprBinary', 'kLt') then
     begin
@@ -64,8 +64,8 @@ begin
          begin Writeln(Current); Current := ''; end;
       const Head  = if Unary then 'not' else PTree.ToString(Node.Field('lhs')) + ' ' +
                                              PTree.ToString(Node.Field('operator'));
-      const LNode = PTree.ToString(InNode.Field('lhs'));
-      const RNode = PTree.ToString(InNode.Field('rhs'));
+      const LText = PTree.ToString(InNode.Field('lhs'));
+      const RText = PTree.ToString(InNode.Field('rhs'));
       Writeln(Line(Node):6, '  tree-sitter: ', Head, ' (', LNode, ' < ', RNode, ')', '   Delphi: (', Head, ' ', LNode, ') < ', RNode);
     end;
 end;
