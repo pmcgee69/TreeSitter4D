@@ -35,7 +35,7 @@ end;
 
 function ToString(const P: TParsed; const N: Optional<TSNode>): string;
 begin
-  Exit( if N is Present(X) then OneLine(Text(P, X)) else '' );
+  Exit( if N is Present(X) then P.Text(X).OneLine else '' );
 end;
 
 // the adding and multiplying operators, which bind tighter than a comparison
