@@ -9,7 +9,7 @@ program TsWalk;
 {$APPTYPE CONSOLE}
 
 uses
-  System.SysUtils, System.StrUtils, System.IOUtils, System.Diagnostics, System.RegularExpressions, TreeSitter.Api, TreeSitter;
+  System.SysUtils, System.IOUtils, System.Diagnostics, System.RegularExpressions, TreeSitter.Api, TreeSitter;
 
 var
   Nodes, Found : Int64;
@@ -18,8 +18,9 @@ var
 // the adding and multiplying operators, which bind tighter than a comparison
 function Tighter(const Op: string): Boolean;
 begin
-  Result := MatchStr(Op, ['kAdd', 'kSub', 'kOr', 'kXor', 'kMul', 'kFdiv',
-                          'kDiv', 'kMod', 'kAnd', 'kShl', 'kShr']);
+  Result := (Op = 'kAdd') or (Op = 'kSub') or (Op = 'kOr')  or (Op = 'kXor')  or
+            (Op = 'kMul') or (Op = 'kFdiv') or (Op = 'kDiv') or (Op = 'kMod') or
+            (Op = 'kAnd') or (Op = 'kShl') or (Op = 'kShr');
 end;
 
 // a node's text, on one line: a line break and the indent after it become a space

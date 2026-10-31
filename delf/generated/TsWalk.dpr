@@ -10,8 +10,8 @@ program TsWalk;
 {$APPTYPE CONSOLE}
 
 uses Delf.Prelude,
-  System.SysUtils, System.StrUtils, System.IOUtils, System.Diagnostics,
-  TreeSitter.Api, TreeSitter.Nodes, Delf.Optional;
+  System.SysUtils, System.IOUtils, System.Diagnostics,
+  TreeSitter.Api, TreeSitter.Nodes, System.StrUtils, Delf.Optional;
 
 { The else of an exhaustive match (SPEC §9.3): unreachable from Delf code, which checks every
   value is covered. noreturn tells dcc32 so, and removes W1035 (experiment 20). }

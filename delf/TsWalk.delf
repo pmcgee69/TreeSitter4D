@@ -10,7 +10,7 @@ program TsWalk;
 {$APPTYPE CONSOLE}
 
 uses
-  System.SysUtils, System.StrUtils, System.IOUtils, System.Diagnostics,
+  System.SysUtils, System.IOUtils, System.Diagnostics,
   TreeSitter.Api, TreeSitter.Nodes;
 
 const
@@ -41,8 +41,10 @@ end;
 // the adding and multiplying operators, which bind tighter than a comparison
 function Tighter(const Op: string): Boolean;
 begin
-  Exit( MatchStr(Op, ['kAdd', 'kSub', 'kOr', 'kXor', 'kMul', 'kFdiv',
-                      'kDiv', 'kMod', 'kAnd', 'kShl', 'kShr']) );
+  Exit( match Op of
+          | 'kAdd', 'kSub', 'kOr', 'kXor', 'kMul', 'kFdiv', 'kDiv', 'kMod', 'kAnd', 'kShl', 'kShr' : True
+          | _ : False
+        end );
 end;
 
 procedure Check(const P: TParsed; const N: TSNode);
