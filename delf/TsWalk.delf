@@ -83,7 +83,7 @@ function WalkFile(const Fn: string): Boolean;
 begin
   if not TFile.Exists(Fn) then Exit( False );
   Current := Fn;
-  const P = Parse(TFile.ReadAllText(Fn));
+  const P = TFile.ReadAllText(Fn).TSParse;
   Walk(P, Root(P));
   Release(P);
   Exit( True );

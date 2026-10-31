@@ -119,7 +119,7 @@ function WalkFile(const Fn: string): Boolean;
 begin
   if not TFile.Exists(Fn) then Exit( False );
   Current := Fn;
-  const P = Parse(TFile.ReadAllText(Fn));
+  const P = TSParse(TFile.ReadAllText(Fn));
   Walk(P, Root(P));
   Release(P);
   Exit( True );

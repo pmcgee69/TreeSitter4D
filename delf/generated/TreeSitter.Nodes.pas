@@ -16,7 +16,7 @@ type
     Tree  : TSTree;
   end;
 
-function Parse(const Source: string): TParsed;
+function TSParse(const Source: string): TParsed;
 procedure Release(const P: TParsed);
 
 function Root(const P: TParsed): TSNode;
@@ -32,7 +32,7 @@ implementation
 var
   Parser: TSParser;
 
-function Parse(const Source: string): TParsed;
+function TSParse(const Source: string): TParsed;
 begin
   if Parser = nil then
   begin
