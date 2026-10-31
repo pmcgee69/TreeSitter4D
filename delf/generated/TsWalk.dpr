@@ -80,9 +80,7 @@ begin
   const Unary = Kind(N) = 'exprUnary';
   const O = Op(N);
   if not ( Tighter(O) or (Unary and (O = 'kNot')) ) then Exit;
-  // a literal on each branch: Field takes UTF8String, and a literal is one at
-  // compile time, where the if's string would be converted on every call
-  const Inner = if Unary then Field(N, 'operand') else Field(N, 'rhs');
+  const Inner = Field(N, if Unary then UTF8('operand') else UTF8('rhs'));
   case Inner.Kind of
     TOptionalKind.Present :
       begin

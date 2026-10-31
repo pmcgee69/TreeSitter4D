@@ -52,11 +52,9 @@ begin
   const Unary = N.Kind = 'exprUnary';
   const O = N.Op;
   if not ( Tighter(O) or (Unary and (O = 'kNot')) ) then Exit;
-  // a literal on each branch: Field takes UTF8String, and a literal is one at
-  // compile time, where the if's string would be converted on every call
-  const Inner := if Unary then N.Field('operand') else N.Field('rhs');
+  const Inner := N.Field(if Unary then UTF8('operand') else UTF8('rhs'));
   if Inner is Present(R) then
-    if (R.Kind = 'exprBinary') and (R.Op = 'kLt') then
+    if (R.Kind, R.Op) is ('exprBinary', 'kLt') then
     begin
       Inc(Found);
       if Current <> '' then

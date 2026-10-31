@@ -10,6 +10,12 @@ uses
   System.SysUtils, TreeSitter.Api, Delf.Optional;
 
 type
+  // a short name for UTF8String, for a field's name where a conditional
+  // chooses it: if Unary then UTF8('operand') else UTF8('rhs') is UTF-8 made
+  // at compile time, where two plain literals make a string converted on
+  // every call (Delf's experiment 52)
+  UTF8 = UTF8String;
+
   // a parsed file: its UTF-8 bytes, for the nodes' text, and the tree
   TParsed = record
     Bytes : TBytes;
