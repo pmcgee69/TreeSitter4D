@@ -33,9 +33,9 @@ var
   Found   : Int64;
   Current : string;   // the file being walked, written before its first finding
 
-function Op(const N: TSNode): string;
+function Op(const Node: TSNode): string;
 begin
-  var __dpp_1 := Field(N, 'operator');
+  var __dpp_1 := Field(Node, 'operator');
   case __dpp_1.Kind of
     TOptionalKind.Present :
       begin
@@ -53,17 +53,17 @@ begin
   Exit( TFunctions.Join(TFunctions.Map<string, string>(S.Split([CRLF, LF]), Trim), ' ') );
 end;
 
-function ToString(const P: TParsed; const N: Optional<TSNode>): string;
+function ToString(const PTree: TParsed; const Node: Optional<TSNode>): string;
 begin
-  case N.Kind of
+  case Node.Kind of
     TOptionalKind.Present :
       begin
-        const X = N.Value;
-        Exit( TSConcat(Text(P, X)) );
+        const X = Node.Value;
+        Exit( TSConcat(Text(PTree, X)) );
       end;
     TOptionalKind.Absent  : Exit( '' );
   else
-    __dpp_Unreachable('TOptionalKind', Ord(N.Kind));
+    __dpp_Unreachable('TOptionalKind', Ord(Node.Kind));
   end;
 end;
 
@@ -74,43 +74,43 @@ begin
                       'kDiv', 'kMod', 'kAnd', 'kShl', 'kShr']) );
 end;
 
-procedure Check(const P: TParsed; const N: TSNode);
+procedure Check(const PTree: TParsed; const Node: TSNode);
 begin
-  const Unary = (Kind(N) = 'exprUnary');
-  const     O = Op(N);
+  const Unary = (Kind(Node) = 'exprUnary');
+  const     O = Op(Node);
 
   if not Tighter(O) and
      not (Unary and (O = 'kNot')) then Exit;
 
-  const Inner = Field(N, if Unary then UTF8('operand') 
+  const InnerOpt = Field(Node, if Unary then UTF8('operand') 
                                   else UTF8('rhs'));
-  case Inner.Kind of
+  case InnerOpt.Kind of
     TOptionalKind.Present :
       begin
-        const R = Inner.Value;
-        if (Kind(R) = 'exprBinary') and (Op(R) = 'kLt') then
+        const InNode = InnerOpt.Value;
+        if (Kind(InNode) = 'exprBinary') and (Op(InNode) = 'kLt') then
         begin
           Inc(Found);
           if Current <> '' then 
              begin Writeln(Current); Current := ''; end;
-          const Head = if Unary then 'not' else ToString(P, Field(N, 'lhs')) + ' ' + 
-                                                ToString(P, Field(N, 'operator'));
-          const B    = ToString(P, Field(R, 'lhs'));
-          const C    = ToString(P, Field(R, 'rhs'));
-          Writeln(Line(N):6, '  tree-sitter: ', Head, ' (', B, ' < ', C, ')', '   Delphi: (', Head, ' ', B, ') < ', C);
+          const Head  = if Unary then 'not' else ToString(PTree, Field(Node, 'lhs')) + ' ' +
+                                                 ToString(PTree, Field(Node, 'operator'));
+          const LNode = ToString(PTree, Field(InNode, 'lhs'));
+          const RNode = ToString(PTree, Field(InNode, 'rhs'));
+          Writeln(Line(Node):6, '  tree-sitter: ', Head, ' (', LNode, ' < ', RNode, ')', '   Delphi: (', Head, ' ', LNode, ') < ', RNode);
         end;
       end;
     TOptionalKind.Absent  : ;
   else
-    __dpp_Unreachable('TOptionalKind', Ord(Inner.Kind));
+    __dpp_Unreachable('TOptionalKind', Ord(InnerOpt.Kind));
   end;
 end;
 
-procedure Walk(const P: TParsed; const N: TSNode);
+procedure Walk(const PTree: TParsed; const Node: TSNode);
 begin
   Inc(Nodes);
-  if MatchStr(Kind(N), ['exprBinary', 'exprUnary']) then Check(P, N);
-  for var C {const} in Children(N) do Walk(P, C);
+  if MatchStr(Kind(Node), ['exprBinary', 'exprUnary']) then Check(PTree, Node);
+  for var Child {const} in Children(Node) do Walk(PTree, Child);
 end;
 
 // walks one file, if there is one: an argument that is neither a folder nor a
@@ -119,9 +119,9 @@ function WalkFile(const Fn: string): Boolean;
 begin
   if not TFile.Exists(Fn) then Exit( False );
   Current := Fn;
-  const P = TSParse(TFile.ReadAllText(Fn));
-  Walk(P, Root(P));
-  Release(P);
+  const PTree = TSParse(TFile.ReadAllText(Fn));
+  Walk(PTree, Root(PTree));
+  Release(PTree);
   Exit( True );
 end;
 

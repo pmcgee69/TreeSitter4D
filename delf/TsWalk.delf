@@ -22,9 +22,9 @@ var
   Found   : Int64;
   Current : string;   // the file being walked, written before its first finding
 
-function Op(const N: TSNode): string;
+function Op(const Node: TSNode): string;
 begin
-  Exit( if N.Field('operator') is Present(F) then F.Kind else '' );
+  Exit( if Node.Field('operator') is Present(F) then F.Kind else '' );
 end;
 
 function TSConcat(const S: string): string;
@@ -32,9 +32,9 @@ begin
   Exit( S.Split([CRLF, LF]).Map(Trim).Join(' ') );
 end;
 
-function ToString(const P: TParsed; const N: Optional<TSNode>): string;
+function ToString(const PTree: TParsed; const Node: Optional<TSNode>): string;
 begin
-  Exit( if N is Present(X) then P.Text(X).TSConcat else '' );
+  Exit( if Node is Present(X) then PTree.Text(X).TSConcat else '' );
 end;
 
 // the adding and multiplying operators, which bind tighter than a comparison
@@ -46,35 +46,35 @@ begin
         end );
 end;
 
-procedure Check(const P: TParsed; const N: TSNode);
+procedure Check(const PTree: TParsed; const Node: TSNode);
 begin
-  const Unary = (N.Kind = 'exprUnary');
-  const     O = N.Op;
+  const Unary = (Node.Kind = 'exprUnary');
+  const     O = Node.Op;
 
   if not Tighter(O) and
      not (Unary and (O = 'kNot')) then Exit;
 
-  const Inner := N.Field(if Unary then UTF8('operand') 
+  const InnerOpt := Node.Field(if Unary then UTF8('operand') 
                                   else UTF8('rhs'));
-  if Inner is Present(R) then
-    if (R.Kind, R.Op) is ('exprBinary', 'kLt') then
+  if InnerOpt is Present(InNode) then
+    if (InNode.Kind, InNode.Op) is ('exprBinary', 'kLt') then
     begin
       Inc(Found);
       if Current <> '' then 
          begin Writeln(Current); Current := ''; end;
-      const Head = if Unary then 'not' else P.ToString(N.Field('lhs')) + ' ' + 
-                                            P.ToString(N.Field('operator'));
-      const B    = P.ToString(R.Field('lhs'));
-      const C    = P.ToString(R.Field('rhs'));
-      Writeln(Line(N):6, '  tree-sitter: ', Head, ' (', B, ' < ', C, ')', '   Delphi: (', Head, ' ', B, ') < ', C);
+      const Head  = if Unary then 'not' else PTree.ToString(Node.Field('lhs')) + ' ' +
+                                             PTree.ToString(Node.Field('operator'));
+      const LNode = PTree.ToString(InNode.Field('lhs'));
+      const RNode = PTree.ToString(InNode.Field('rhs'));
+      Writeln(Line(Node):6, '  tree-sitter: ', Head, ' (', LNode, ' < ', RNode, ')', '   Delphi: (', Head, ' ', LNode, ') < ', RNode);
     end;
 end;
 
-procedure Walk(const P: TParsed; const N: TSNode);
+procedure Walk(const PTree: TParsed; const Node: TSNode);
 begin
   Inc(Nodes);
-  if N.Kind in ['exprBinary', 'exprUnary'] then Check(P, N);
-  for const C in Children(N) do Walk(P, C);
+  if Node.Kind in ['exprBinary', 'exprUnary'] then Check(PTree, Node);
+  for const Child in Children(Node) do Walk(PTree, Child);
 end;
 
 // walks one file, if there is one: an argument that is neither a folder nor a
@@ -83,9 +83,9 @@ function WalkFile(const Fn: string): Boolean;
 begin
   if not TFile.Exists(Fn) then Exit( False );
   Current := Fn;
-  const P = TFile.ReadAllText(Fn).TSParse;
-  Walk(P, Root(P));
-  Release(P);
+  const PTree = TFile.ReadAllText(Fn).TSParse;
+  Walk(PTree, Root(PTree));
+  Release(PTree);
   Exit( True );
 end;
 
