@@ -23,7 +23,7 @@ function Root(const P: TParsed): TSNode;
 function Kind(const N: TSNode): string;
 function Text(const P: TParsed; const N: TSNode): string;
 function Children(const N: TSNode): TArray<TSNode>;
-function Field(const N: TSNode; const Name: string): Optional<TSNode>;
+function Field(const N: TSNode; const Name: UTF8String): Optional<TSNode>;
 function HasError(const N: TSNode): Boolean;
 function Line(const N: TSNode): Integer;
 
@@ -41,7 +41,7 @@ begin
       raise Exception.Create('tree-sitter: this runtime doesn''t take the language''s ABI version');
   end;
   Result.Bytes := TEncoding.UTF8.GetBytes(Source);
-  Result.Tree  := ts_parser_parse_string(Parser, nil, PAnsiChar(Result.Bytes), Length(Result.Bytes));
+  Result.Tree  := ts_parser_parse_string(Parser, nil, PByte(Result.Bytes), Length(Result.Bytes));
 end;
 
 procedure Release(const P: TParsed);
@@ -71,10 +71,9 @@ begin
   for var i := 0 to High(Result) do Result[i] := ts_node_child(N, i);
 end;
 
-function Field(const N: TSNode; const Name: string): Optional<TSNode>;
+function Field(const N: TSNode; const Name: UTF8String): Optional<TSNode>;
 begin
-  const Utf8 = UTF8String(Name);
-  const F = ts_node_child_by_field_name(N, PAnsiChar(Utf8), Length(Utf8));
+  const F = ts_node_child_by_field_name(N, PByte(Name), Length(Name));
   Exit( if ts_node_is_null(F) then Optional<TSNode>.Absent else Optional<TSNode>.Present(F) );
 end;
 

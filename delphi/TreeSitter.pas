@@ -76,7 +76,7 @@ end;
 function TTSNode.Field(const Name: string): TTSNode;
 begin
   var Utf8 := UTF8String(Name);
-  Result.FNode := ts_node_child_by_field_name(FNode, PAnsiChar(Utf8), Length(Utf8));
+  Result.FNode := ts_node_child_by_field_name(FNode, PByte(Utf8), Length(Utf8));
 end;
 
 function TTSNode.StartByte: Integer;
@@ -140,7 +140,7 @@ end;
 function TTSParser.Parse(const Source: string): TTSTree;
 begin
   var Bytes := TEncoding.UTF8.GetBytes(Source);
-  Result := TTSTree.Create(ts_parser_parse_string(FParser, nil, PAnsiChar(Bytes), Length(Bytes)), Bytes);
+  Result := TTSTree.Create(ts_parser_parse_string(FParser, nil, PByte(Bytes), Length(Bytes)), Bytes);
 end;
 
 end.

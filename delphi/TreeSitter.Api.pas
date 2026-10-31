@@ -32,7 +32,7 @@ type
 function  ts_parser_new: TSParser; cdecl; external;
 procedure ts_parser_delete(Parser: TSParser); cdecl; external;
 function  ts_parser_set_language(Parser: TSParser; Language: TSLanguage): Boolean; cdecl; external;
-function  ts_parser_parse_string(Parser: TSParser; OldTree: TSTree; Source: PAnsiChar;
+function  ts_parser_parse_string(Parser: TSParser; OldTree: TSTree; Source: PByte;
             Length: UInt32): TSTree; cdecl; external;
 procedure ts_tree_delete(Tree: TSTree); cdecl; external;
 function  ts_tree_root_node(Tree: TSTree): TSNode; cdecl; external;
@@ -44,7 +44,7 @@ function  ts_node_end_byte(Node: TSNode): UInt32; cdecl; external;
 function  ts_node_start_point(Node: TSNode): TSPoint; cdecl; external;
 function  ts_node_child_count(Node: TSNode): UInt32; cdecl; external;
 function  ts_node_child(Node: TSNode; Index: UInt32): TSNode; cdecl; external;
-function  ts_node_child_by_field_name(Node: TSNode; Name: PAnsiChar;
+function  ts_node_child_by_field_name(Node: TSNode; Name: PByte;
             Length: UInt32): TSNode; cdecl; external;
 
 function  tree_sitter_delphi13: TSLanguage; cdecl; external;
