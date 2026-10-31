@@ -35,7 +35,17 @@ var
 
 function Op(const N: TSNode): string;
 begin
-  Exit( TOptional.OrDefault<string>(TOptional.Map<TSNode, string>(Field(N, 'operator'), Kind), '') );
+  var __dpp_1 := Field(N, 'operator');
+  case __dpp_1.Kind of
+    TOptionalKind.Present :
+      begin
+        const F = __dpp_1.Value;
+        Exit( Kind(F) );
+      end;
+    TOptionalKind.Absent  : Exit( '' );
+  else
+    __dpp_Unreachable('TOptionalKind', Ord(__dpp_1.Kind));
+  end;
 end;
 
 // a node's text, on one line: each line trimmed, joined with a space
@@ -85,8 +95,7 @@ begin
           const Head = if Unary then 'not' else ToString(P, Field(N, 'lhs')) + ' ' + ToString(P, Field(N, 'operator'));
           const B    = ToString(P, Field(R, 'lhs'));
           const C    = ToString(P, Field(R, 'rhs'));
-          Writeln(Line(N):6, '  tree-sitter: ', Head, ' (', B, ' < ', C, ')',
-                  '   Delphi: (', Head, ' ', B, ') < ', C);
+          Writeln(Line(N):6, '  tree-sitter: ', Head, ' (', B, ' < ', C, ')', '   Delphi: (', Head, ' ', B, ') < ', C);
         end;
       end;
     TOptionalKind.Absent  : ;

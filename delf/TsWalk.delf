@@ -24,7 +24,7 @@ var
 
 function Op(const N: TSNode): string;
 begin
-  Exit( N.Field('operator').Map(Kind).OrDefault('') );
+  Exit( if N.Field('operator') is Present(F) then F.Kind else '' );
 end;
 
 // a node's text, on one line: each line trimmed, joined with a space
@@ -61,11 +61,10 @@ begin
         Writeln(Current);
         Current := '';
       end;
-      const Head = if Unary then 'not' else ToString(P, N.Field('lhs')) + ' ' + ToString(P, N.Field('operator'));
-      const B    = ToString(P, R.Field('lhs'));
-      const C    = ToString(P, R.Field('rhs'));
-      Writeln(Line(N):6, '  tree-sitter: ', Head, ' (', B, ' < ', C, ')',
-              '   Delphi: (', Head, ' ', B, ') < ', C);
+      const Head = if Unary then 'not' else P.ToString(N.Field('lhs')) + ' ' + P.ToString(N.Field('operator'));
+      const B    = P.ToString(R.Field('lhs'));
+      const C    = P.ToString(R.Field('rhs'));
+      Writeln(Line(N):6, '  tree-sitter: ', Head, ' (', B, ' < ', C, ')', '   Delphi: (', Head, ' ', B, ') < ', C);
     end;
 end;
 
