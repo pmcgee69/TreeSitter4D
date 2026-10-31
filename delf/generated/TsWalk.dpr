@@ -10,7 +10,7 @@ program TsWalk;
 {$APPTYPE CONSOLE}
 
 uses Delf.Prelude,
-  System.SysUtils, System.IOUtils, System.Diagnostics,
+  System.SysUtils, System.StrUtils, System.IOUtils, System.Diagnostics,
   TreeSitter.Api, TreeSitter.Nodes, Delf.Optional;
 
 { The else of an exhaustive match (SPEC §9.3): unreachable from Delf code, which checks every
@@ -52,10 +52,8 @@ end;
 // the adding and multiplying operators, which bind tighter than a comparison
 function Tighter(const Op: string): Boolean;
 begin
-  if (Op = 'kAdd') or (Op = 'kSub') or (Op = 'kOr') or (Op = 'kXor') or (Op = 'kMul') or (Op = 'kFdiv') or (Op = 'kDiv') or (Op = 'kMod') or (Op = 'kAnd') or (Op = 'kShl') or (Op = 'kShr') then
-    Exit( True )
-  else
-    Exit( False );
+  Exit( MatchStr(Op, ['kAdd', 'kSub', 'kOr', 'kXor', 'kMul', 'kFdiv',
+                      'kDiv', 'kMod', 'kAnd', 'kShl', 'kShr']) );
 end;
 
 procedure Check(const P: TParsed; const N: TSNode);
