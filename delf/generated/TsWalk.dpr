@@ -48,8 +48,7 @@ begin
   end;
 end;
 
-// a node's text, on one line: each line trimmed, joined with a space
-function OneLine(const S: string): string;
+function TSConcat(const S: string): string;
 begin
   Exit( TFunctions.Join(TFunctions.Map<string, string>(S.Split([CRLF, LF]), Trim), ' ') );
 end;
@@ -60,7 +59,7 @@ begin
     TOptionalKind.Present :
       begin
         const X = N.Value;
-        Exit( OneLine(Text(P, X)) );
+        Exit( TSConcat(Text(P, X)) );
       end;
     TOptionalKind.Absent  : Exit( '' );
   else
@@ -77,10 +76,14 @@ end;
 
 procedure Check(const P: TParsed; const N: TSNode);
 begin
-  const Unary = Kind(N) = 'exprUnary';
-  const O = Op(N);
-  if not ( Tighter(O) or (Unary and (O = 'kNot')) ) then Exit;
-  const Inner = Field(N, if Unary then UTF8('operand') else UTF8('rhs'));
+  const Unary = (Kind(N) = 'exprUnary');
+  const     O = Op(N);
+
+  if not Tighter(O) and
+     not (Unary and (O = 'kNot')) then Exit;
+
+  const Inner = Field(N, if Unary then UTF8('operand') 
+                                  else UTF8('rhs'));
   case Inner.Kind of
     TOptionalKind.Present :
       begin
@@ -88,12 +91,10 @@ begin
         if (Kind(R) = 'exprBinary') and (Op(R) = 'kLt') then
         begin
           Inc(Found);
-          if Current <> '' then
-          begin
-            Writeln(Current);
-            Current := '';
-          end;
-          const Head = if Unary then 'not' else ToString(P, Field(N, 'lhs')) + ' ' + ToString(P, Field(N, 'operator'));
+          if Current <> '' then 
+             begin Writeln(Current); Current := ''; end;
+          const Head = if Unary then 'not' else ToString(P, Field(N, 'lhs')) + ' ' + 
+                                                ToString(P, Field(N, 'operator'));
           const B    = ToString(P, Field(R, 'lhs'));
           const C    = ToString(P, Field(R, 'rhs'));
           Writeln(Line(N):6, '  tree-sitter: ', Head, ' (', B, ' < ', C, ')', '   Delphi: (', Head, ' ', B, ') < ', C);

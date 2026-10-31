@@ -27,14 +27,14 @@ begin
   Exit( if N.Field('operator') is Present(F) then F.Kind else '' );
 end;
 
-function Concat(const S: string): string;
+function TSConcat(const S: string): string;
 begin
   Exit( S.Split([CRLF, LF]).Map(Trim).Join(' ') );
 end;
 
 function ToString(const P: TParsed; const N: Optional<TSNode>): string;
 begin
-  Exit( if N is Present(X) then P.Text(X).Concat else '' );
+  Exit( if N is Present(X) then P.Text(X).TSConcat else '' );
 end;
 
 // the adding and multiplying operators, which bind tighter than a comparison
@@ -52,7 +52,7 @@ begin
   const     O = N.Op;
 
   if not Tighter(O) and
-     not (Unary and (O = 'kNot')) ) then Exit;
+     not (Unary and (O = 'kNot')) then Exit;
 
   const Inner := N.Field(if Unary then UTF8('operand') 
                                   else UTF8('rhs'));
