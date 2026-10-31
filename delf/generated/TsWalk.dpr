@@ -108,8 +108,7 @@ end;
 procedure Walk(const P: TParsed; const N: TSNode);
 begin
   Inc(Nodes);
-  const K = Kind(N);
-  if (K = 'exprBinary') or (K = 'exprUnary') then Check(P, N);
+  if MatchStr(Kind(N), ['exprBinary', 'exprUnary']) then Check(P, N);
   for var C {const} in Children(N) do Walk(P, C);
 end;
 
