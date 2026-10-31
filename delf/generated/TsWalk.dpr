@@ -46,7 +46,16 @@ end;
 
 function ToString(const P: TParsed; const N: Optional<TSNode>): string;
 begin
-  Exit( TOptional.OrDefault<string>(TOptional.Map<TSNode, string>(N, function(X: TSNode): string begin Result := OneLine(Text(P, X)); end), '') );
+  case N.Kind of
+    TOptionalKind.Present :
+      begin
+        const X = N.Value;
+        Exit( OneLine(Text(P, X)) );
+      end;
+    TOptionalKind.Absent  : Exit( '' );
+  else
+    __dpp_Unreachable('TOptionalKind', Ord(N.Kind));
+  end;
 end;
 
 // the adding and multiplying operators, which bind tighter than a comparison

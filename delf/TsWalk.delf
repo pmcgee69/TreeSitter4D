@@ -24,7 +24,7 @@ var
 
 function Op(const N: TSNode): string;
 begin
-  Exit( Field(N, 'operator').Map(Kind).OrDefault('') );
+  Exit( N.Field('operator').Map(Kind).OrDefault('') );
 end;
 
 // a node's text, on one line: each line trimmed, joined with a space
@@ -35,7 +35,7 @@ end;
 
 function ToString(const P: TParsed; const N: Optional<TSNode>): string;
 begin
-  Exit( N.Map(λX -> OneLine(Text(P, X))).OrDefault('') );
+  Exit( if N is Present(X) then OneLine(Text(P, X)) else '' );
 end;
 
 // the adding and multiplying operators, which bind tighter than a comparison
@@ -51,7 +51,7 @@ procedure Check(const P: TParsed; const N: TSNode);
 begin
   const Unary = N.Kind = 'exprUnary';
   if not ( Tighter(N.Op) or (Unary and (N.Op = 'kNot')) ) then Exit;
-  const Inner := Field(N, if Unary then 'operand' else 'rhs');
+  const Inner := N.Field(if Unary then 'operand' else 'rhs');
   if Inner is Present(R) then
     if (R.Kind = 'exprBinary') and (R.Op = 'kLt') then
     begin
@@ -61,9 +61,9 @@ begin
         Writeln(Current);
         Current := '';
       end;
-      const Head = if Unary then 'not' else ToString(P, Field(N, 'lhs')) + ' ' + ToString(P, Field(N, 'operator'));
-      const B    = ToString(P, Field(R, 'lhs'));
-      const C    = ToString(P, Field(R, 'rhs'));
+      const Head = if Unary then 'not' else ToString(P, N.Field('lhs')) + ' ' + ToString(P, N.Field('operator'));
+      const B    = ToString(P, R.Field('lhs'));
+      const C    = ToString(P, R.Field('rhs'));
       Writeln(Line(N):6, '  tree-sitter: ', Head, ' (', B, ' < ', C, ')',
               '   Delphi: (', Head, ' ', B, ') < ', C);
     end;
