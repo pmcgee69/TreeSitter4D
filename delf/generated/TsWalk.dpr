@@ -83,7 +83,7 @@ begin
      not (Unary and (O = 'kNot')) then Exit;
 
   const InnerOpt = Field(Node, if Unary then UTF8('operand') 
-                                  else UTF8('rhs'));
+                                        else UTF8('rhs'));
   case InnerOpt.Kind of
     TOptionalKind.Present :
       begin
@@ -95,9 +95,9 @@ begin
              begin Writeln(Current); Current := ''; end;
           const Head  = if Unary then 'not' else ToString(PTree, Field(Node, 'lhs')) + ' ' +
                                                  ToString(PTree, Field(Node, 'operator'));
-          const LNode = ToString(PTree, Field(InNode, 'lhs'));
-          const RNode = ToString(PTree, Field(InNode, 'rhs'));
-          Writeln(Line(Node):6, '  tree-sitter: ', Head, ' (', LNode, ' < ', RNode, ')', '   Delphi: (', Head, ' ', LNode, ') < ', RNode);
+          const LText = ToString(PTree, Field(InNode, 'lhs'));
+          const RText = ToString(PTree, Field(InNode, 'rhs'));
+          Writeln(Line(Node):6, '  tree-sitter: ', Head, ' (', LText, ' < ', RText, ')', '   Delphi: (', Head, ' ', LText, ') < ', RText);
         end;
       end;
     TOptionalKind.Absent  : ;

@@ -66,7 +66,7 @@ begin
                                              PTree.ToString(Node.Field('operator'));
       const LText = PTree.ToString(InNode.Field('lhs'));
       const RText = PTree.ToString(InNode.Field('rhs'));
-      Writeln(Line(Node):6, '  tree-sitter: ', Head, ' (', LNode, ' < ', RNode, ')', '   Delphi: (', Head, ' ', LNode, ') < ', RNode);
+      Writeln(Line(Node):6, '  tree-sitter: ', Head, ' (', LText, ' < ', RText, ')', '   Delphi: (', Head, ' ', LText, ') < ', RText);
     end;
 end;
 
