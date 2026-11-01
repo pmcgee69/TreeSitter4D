@@ -45,6 +45,18 @@ Each zip has the licences, and the release lists their SHA-256 sums. Tried from 
 holding only `delphi\` and the zips' contents: dcc64 and dcc32, objects and DLLs, all four
 report the same 37 as below.
 
+### Making a release
+
+From a RAD Studio command prompt, with Python:
+
+```
+build-c.cmd dll
+build-c.cmd win32 dll
+python tools\package-release.py 0.2.0     rem dist\: the two zips and SHA256SUMS.txt
+python tools\test-release.py 0.2.0        rem as a Delphi-only user would: all four must give the 37
+gh release create v0.2.0 dist\*           rem with notes saying what changed
+```
+
 ## Building the C
 
 From a RAD Studio command prompt:
