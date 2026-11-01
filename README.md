@@ -3,10 +3,15 @@
 [Tree-sitter](https://github.com/tree-sitter/tree-sitter), the incremental parsing library, built
 with **C++Builder** and used from **Delphi** and **C++Builder** programs. 
 
-Everything is compiled by RAD Studio's own tools: bcc64x for the C, dcc64 for Delphi. 
+Everything is compiled by RAD Studio's own tools: bcc64x and bcc32c for the C, dcc64 and dcc32
+for Delphi. Win64 and Win32.
 
 There are no DLLs unless you want them, because the objects link straight into the executable with Delphi's
 `{$L}`.
+
+**Only Delphi, no C++Builder?** Take the C ready-made from a
+[release](https://github.com/pmcgee69/TreeSitter4D/releases): the objects, or the DLLs
+([below](#with-delphi-alone-a-release)).
 
 The repository holds C, Delphi and C++ (and [Delf](https://github.com/pmcgee69/delfpascal)). 
 You don't need Node, Rust or Python to build it: the grammar's parser is the C that tree-sitter generated, committed here.
@@ -19,19 +24,42 @@ You don't need Node, Rust or Python to build it: the grammar's parser is the C t
 | `c/tree-sitter-delphi13` | a Delphi 13 grammar, generated (`parser.c`, `scanner.c`) | [Alexl-git/tree-sitter-delphi13](https://github.com/Alexl-git/tree-sitter-delphi13), MIT | v1.3.0 |
 
 Each folder keeps its project's `LICENSE`.  
-`c/tree-sitter/exports.def` lists the API's functions, for building `tree-sitter.dll`.
+`c/tree-sitter/exports.def` lists the API's functions, for building `tree-sitter.dll`; the
+`exports-win32.def` files beside it and in `c/tree-sitter-delphi13` do the same for Win32.
+
+## With Delphi alone: a release
+
+A [release](https://github.com/pmcgee69/TreeSitter4D/releases) carries the C compiled, so
+nothing but Delphi is needed:
+
+- **`TreeSitter4D-<version>-objects.zip`**: unzip it into the repository's root. It puts the
+  objects in `obj\` (Win64) and `obj\win32\` (Win32), where `TreeSitter.Api.pas` links them.
+  Then build as [below](#building-the-two-delphi-walkers-with-delphi-alone), with dcc64 or
+  dcc32. Nothing to ship with the program.
+- **`TreeSitter4D-<version>-dlls.zip`**: `tree-sitter.dll` and `tree-sitter-delphi13.dll`,
+  Win64 and Win32. Put the pair beside the executable and define `TS_DLL`
+  (`dcc64 -DTS_DLL …`): `TreeSitter.Api.pas` then takes the same functions from them. Other
+  bindings that load `tree-sitter.dll` and a grammar DLL can use them too.
+
+Each zip has the licences, and the release lists their SHA-256 sums. Tried from a folder
+holding only `delphi\` and the zips' contents: dcc64 and dcc32, objects and DLLs, all four
+report the same 37 as below.
 
 ## Building the C
 
 From a RAD Studio command prompt:
 
 ```
-build-c.cmd          rem obj\ts_lib.o, obj\delphi13_parser.o, obj\delphi13_scanner.o
-build-c.cmd dll      rem also obj\tree-sitter.dll and obj\tree-sitter-delphi13.dll
+build-c.cmd              rem Win64: obj\ts_lib.o, obj\delphi13_parser.o, obj\delphi13_scanner.o
+build-c.cmd dll          rem also obj\tree-sitter.dll and obj\tree-sitter-delphi13.dll
+build-c.cmd win32        rem Win32: obj\win32\ts_lib.obj, …parser.obj, …scanner.obj
+build-c.cmd win32 dll    rem also obj\win32\tree-sitter.dll and obj\win32\tree-sitter-delphi13.dll
 ```
 
-Tested with bcc64x 7.80 (C++Builder 13, Clang 20). It takes about ten seconds; the grammar
-is 17 MB of generated C.
+Tested with bcc64x 7.80 (C++Builder 13, Clang 20) and bcc32c 7.80. It takes about ten seconds
+each; the grammar is 17 MB of generated C. For Win32 the runtime is compiled through
+`c\ts_lib_win32.c`, which says why: bcc32c would otherwise leave five of the runtime's
+functions without a body.
 
 ## The programs
 
@@ -47,8 +75,8 @@ obj\tswalk23.exe   <file or folder>...      rem C++23
 ```
 
 - **Delphi** (`delphi\`): `TreeSitter.Api.pas` declares the C API and links the objects with
-  `{$L}`; `TreeSitter.pas` puts a parser class, a tree class and a node record over it;
-  `TsWalk.dpr` is the walker.
+  `{$L}` (Win64 or Win32), or with `TS_DLL` defined takes it from the DLLs; `TreeSitter.pas`
+  puts a parser class, a tree class and a node record over it; `TsWalk.dpr` is the walker.
 - **C++17** (`cpp\tswalk.cpp`): tree-sitter's own `api.h`, the same objects.
 - **C++23** (`cpp\tswalk23.cpp`): same, using `std::print`, `std::expected`, ranges,
   and `std::unique_ptr` for C handle ownership.
@@ -96,8 +124,8 @@ Other approaches are being examined as well.
 
 Both walkers are ordinary Delphi programs. The Delf one is Delphi too: `delf\generated\`
 holds everything it needs, so building it takes no Delf tools, only dcc64. Both need the C
-objects first (`build-c.cmd`, above), which `TreeSitter.Api.pas` links with
-`{$L ..\obj\*.o}`.
+objects first (`build-c.cmd`, above, or a [release](#with-delphi-alone-a-release)), which
+`TreeSitter.Api.pas` links with `{$L ..\obj\*.o}`, or `{$L ..\obj\win32\*.obj}` for Win32.
 
 The hand-written walker:
 
@@ -105,6 +133,9 @@ The hand-written walker:
 cd delphi
 dcc64 -B -E..\obj -NU..\obj\dcu "-NSSystem;Winapi" TsWalk.dpr
 ```
+
+For Win32, dcc32 the same way, into folders of its own (say `-E..\obj\w32 -NU..\obj\dcu32`).
+Over `source\rtl\common` it reports the same 37.
 
 The Delf walker, from delfc's output: the same, plus `-U` for `TreeSitter.Api.pas`, which it
 shares with the hand-written one:

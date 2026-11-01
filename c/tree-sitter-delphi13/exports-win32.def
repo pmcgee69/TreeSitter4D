@@ -1,0 +1,3 @@
+; the grammar DLL for Win32 (build-c.cmd win32): its one function, under its plain name
+EXPORTS
+tree_sitter_delphi13 = _tree_sitter_delphi13

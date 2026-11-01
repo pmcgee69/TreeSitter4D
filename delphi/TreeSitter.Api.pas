@@ -1,11 +1,17 @@
 unit TreeSitter.Api;
 
 { The part of tree-sitter's C API (tree_sitter/api.h) these programs use, and
-  the Delphi 13 grammar. The C is compiled by C++Builder's bcc64x
-  (build-c.cmd) and linked into the executable with $L: no DLLs.
+  the Delphi 13 grammar.
 
-  The objects' C library comes from System.Win.Crtl (msvcrt.dll). What it
-  doesn't declare is declared here, from msvcrt.dll too. }
+  By default the C is linked into the executable with $L: no DLLs. The
+  objects are compiled by C++Builder (build-c.cmd): bcc64x for Win64
+  (obj\*.o) and bcc32c for Win32 (obj\win32\*.obj); a release carries them
+  ready-made, so Delphi alone can build. The objects' C library comes from
+  System.Win.Crtl (msvcrt.dll); what it doesn't declare is declared here, from
+  msvcrt.dll too.
+
+  With TS_DLL defined, the same functions come from tree-sitter.dll and
+  tree-sitter-delphi13.dll instead, beside the executable. }
 
 interface
 
@@ -17,7 +23,7 @@ type
   TSTree     = Pointer;
   TSLanguage = Pointer;
 
-  // passed and returned by value: 32 bytes
+  // passed and returned by value: 32 bytes on Win64, 24 on Win32
   TSNode = record
     Context : array[0..3] of UInt32;
     Id      : Pointer;
@@ -29,35 +35,78 @@ type
     Column : UInt32;
   end;
 
-function  ts_parser_new: TSParser; cdecl; external;
-procedure ts_parser_delete(Parser: TSParser); cdecl; external;
-function  ts_parser_set_language(Parser: TSParser; Language: TSLanguage): Boolean; cdecl; external;
-function  ts_parser_parse_string(Parser: TSParser; OldTree: TSTree; Source: PByte;
-            Length: UInt32): TSTree; cdecl; external;
-procedure ts_tree_delete(Tree: TSTree); cdecl; external;
-function  ts_tree_root_node(Tree: TSTree): TSNode; cdecl; external;
-function  ts_node_type(Node: TSNode): PAnsiChar; cdecl; external;
-function  ts_node_is_null(Node: TSNode): Boolean; cdecl; external;
-function  ts_node_has_error(Node: TSNode): Boolean; cdecl; external;
-function  ts_node_start_byte(Node: TSNode): UInt32; cdecl; external;
-function  ts_node_end_byte(Node: TSNode): UInt32; cdecl; external;
-function  ts_node_start_point(Node: TSNode): TSPoint; cdecl; external;
-function  ts_node_child_count(Node: TSNode): UInt32; cdecl; external;
-function  ts_node_child(Node: TSNode; Index: UInt32): TSNode; cdecl; external;
-function  ts_node_child_by_field_name(Node: TSNode; Name: PByte;
-            Length: UInt32): TSNode; cdecl; external;
+const
+  // a C name as linked: Win32's C names begin with an underscore
+{$IF Defined(WIN32) and not Defined(TS_DLL)}
+  TS_C = '_';
+{$ELSE}
+  TS_C = '';
+{$ENDIF}
+{$IFDEF TS_DLL}
+  TS_RUNTIME = 'tree-sitter.dll';
+  TS_GRAMMAR = 'tree-sitter-delphi13.dll';
+{$ENDIF}
 
-function  tree_sitter_delphi13: TSLanguage; cdecl; external;
+function  ts_parser_new: TSParser; cdecl;
+            external {$IFDEF TS_DLL}TS_RUNTIME{$ENDIF} name TS_C + 'ts_parser_new';
+procedure ts_parser_delete(Parser: TSParser); cdecl;
+            external {$IFDEF TS_DLL}TS_RUNTIME{$ENDIF} name TS_C + 'ts_parser_delete';
+function  ts_parser_set_language(Parser: TSParser; Language: TSLanguage): Boolean; cdecl;
+            external {$IFDEF TS_DLL}TS_RUNTIME{$ENDIF} name TS_C + 'ts_parser_set_language';
+function  ts_parser_parse_string(Parser: TSParser; OldTree: TSTree; Source: PByte;
+            Length: UInt32): TSTree; cdecl;
+            external {$IFDEF TS_DLL}TS_RUNTIME{$ENDIF} name TS_C + 'ts_parser_parse_string';
+procedure ts_tree_delete(Tree: TSTree); cdecl;
+            external {$IFDEF TS_DLL}TS_RUNTIME{$ENDIF} name TS_C + 'ts_tree_delete';
+function  ts_tree_root_node(Tree: TSTree): TSNode; cdecl;
+            external {$IFDEF TS_DLL}TS_RUNTIME{$ENDIF} name TS_C + 'ts_tree_root_node';
+function  ts_node_type(Node: TSNode): PAnsiChar; cdecl;
+            external {$IFDEF TS_DLL}TS_RUNTIME{$ENDIF} name TS_C + 'ts_node_type';
+function  ts_node_is_null(Node: TSNode): Boolean; cdecl;
+            external {$IFDEF TS_DLL}TS_RUNTIME{$ENDIF} name TS_C + 'ts_node_is_null';
+function  ts_node_has_error(Node: TSNode): Boolean; cdecl;
+            external {$IFDEF TS_DLL}TS_RUNTIME{$ENDIF} name TS_C + 'ts_node_has_error';
+function  ts_node_start_byte(Node: TSNode): UInt32; cdecl;
+            external {$IFDEF TS_DLL}TS_RUNTIME{$ENDIF} name TS_C + 'ts_node_start_byte';
+function  ts_node_end_byte(Node: TSNode): UInt32; cdecl;
+            external {$IFDEF TS_DLL}TS_RUNTIME{$ENDIF} name TS_C + 'ts_node_end_byte';
+function  ts_node_start_point(Node: TSNode): TSPoint; cdecl;
+            external {$IFDEF TS_DLL}TS_RUNTIME{$ENDIF} name TS_C + 'ts_node_start_point';
+function  ts_node_child_count(Node: TSNode): UInt32; cdecl;
+            external {$IFDEF TS_DLL}TS_RUNTIME{$ENDIF} name TS_C + 'ts_node_child_count';
+function  ts_node_child(Node: TSNode; Index: UInt32): TSNode; cdecl;
+            external {$IFDEF TS_DLL}TS_RUNTIME{$ENDIF} name TS_C + 'ts_node_child';
+function  ts_node_child_by_field_name(Node: TSNode; Name: PByte;
+            Length: UInt32): TSNode; cdecl;
+            external {$IFDEF TS_DLL}TS_RUNTIME{$ENDIF} name TS_C + 'ts_node_child_by_field_name';
+
+function  tree_sitter_delphi13: TSLanguage; cdecl;
+            external {$IFDEF TS_DLL}TS_GRAMMAR{$ENDIF} name TS_C + 'tree_sitter_delphi13';
 
 implementation
 
+{$IFNDEF TS_DLL}
+
+{$IFDEF WIN64}
 {$L ..\obj\ts_lib.o}
 {$L ..\obj\delphi13_scanner.o}
 {$L ..\obj\delphi13_parser.o}
+{$ENDIF}
+{$IFDEF WIN32}
+{$L ..\obj\win32\ts_lib.obj}
+{$L ..\obj\win32\delphi13_scanner.obj}
+{$L ..\obj\win32\delphi13_parser.obj}
+{$ENDIF}
 
 const
   CRT = 'msvcrt.dll';
 
+function  __iob_func: PByte; cdecl; external CRT;
+
+// System.Win.Crtl's malloc, realloc and free are Delphi's memory manager, so
+// calloc must be too: msvcrt's calloc gives blocks Crtl's free can't take back
+
+{$IFDEF WIN64}
 function  iswctype(C: Word; Mask: Word): Integer; cdecl; external CRT;
 function  fputc(C: Integer; F: Pointer): Integer; cdecl; external CRT;
 function  fwrite(P: Pointer; Size, Count: NativeUInt; F: Pointer): NativeUInt; cdecl; external CRT;
@@ -67,10 +116,7 @@ function  _get_osfhandle(Fd: Integer): NativeInt; cdecl; external CRT;
 function  _open_osfhandle(H: NativeInt; Flags: Integer): Integer; cdecl; external CRT;
 procedure abort; cdecl; external CRT;
 procedure _assert(Msg, F: PAnsiChar; Line: Cardinal); cdecl; external CRT;
-function  __iob_func: PByte; cdecl; external CRT;
 
-// System.Win.Crtl's malloc, realloc and free are Delphi's memory manager, so
-// calloc must be too: msvcrt's calloc gives blocks Crtl's free can't take back
 function calloc(Count, Size: NativeUInt): Pointer; cdecl;
 begin
   Result := AllocMem(Count * Size);
@@ -90,5 +136,43 @@ procedure tree_sitter_delphi13_external_scanner_destroy; cdecl; external;
 procedure tree_sitter_delphi13_external_scanner_scan; cdecl; external;
 procedure tree_sitter_delphi13_external_scanner_serialize; cdecl; external;
 procedure tree_sitter_delphi13_external_scanner_deserialize; cdecl; external;
+{$ENDIF}
+
+{$IFDEF WIN32}
+// bcc32c's objects name the C library with Win32's leading underscore
+function  _iswalnum(C: Word): Integer; cdecl; external CRT name 'iswalnum';
+function  _iswspace(C: Word): Integer; cdecl; external CRT name 'iswspace';
+function  _fputc(C: Integer; F: Pointer): Integer; cdecl; external CRT name 'fputc';
+function  _fwrite(P: Pointer; Size, Count: NativeUInt; F: Pointer): NativeUInt; cdecl; external CRT name 'fwrite';
+function  _fclose(F: Pointer): Integer; cdecl; external CRT name 'fclose';
+function  __fdopen(Fd: Integer; Mode: PAnsiChar): Pointer; cdecl; external CRT name '_fdopen';
+function  __get_osfhandle(Fd: Integer): NativeInt; cdecl; external CRT name '_get_osfhandle';
+function  __open_osfhandle(H: NativeInt; Flags: Integer): Integer; cdecl; external CRT name '_open_osfhandle';
+procedure _abort; cdecl; external CRT name 'abort';
+procedure __assert(Msg, F: PAnsiChar; Line: Cardinal); cdecl; external CRT name '_assert';
+// 64-bit unsigned division, which the compiler calls for UInt64 on Win32
+procedure __aulldiv; external 'ntdll.dll' name '_aulldiv';
+
+function _calloc(Count, Size: NativeUInt): Pointer; cdecl;
+begin
+  Result := AllocMem(Count * Size);
+end;
+
+// bcc32c's stdin, stdout and stderr are __get_std_stream(0, 1, 2): on msvcrt's
+// own table (a FILE is 32 bytes on Win32)
+function ___get_std_stream(Id: Cardinal): Pointer; cdecl;
+begin
+  Result := __iob_func + Id * 32;
+end;
+
+procedure _tree_sitter_delphi13_external_scanner_create; cdecl; external;
+procedure _tree_sitter_delphi13_external_scanner_destroy; cdecl; external;
+procedure _tree_sitter_delphi13_external_scanner_scan; cdecl; external;
+procedure _tree_sitter_delphi13_external_scanner_serialize; cdecl; external;
+procedure _tree_sitter_delphi13_external_scanner_deserialize; cdecl; external;
+
+{$ENDIF}
+
+{$ENDIF}
 
 end.
