@@ -21,7 +21,7 @@ You don't need Node, Rust or Python to build it: the grammar's parser is the C t
 | Folder | What | From | Version |
 |---|---|---|---|
 | `c/tree-sitter` | the runtime (`src/`, `include/`) | [tree-sitter/tree-sitter](https://github.com/tree-sitter/tree-sitter), MIT | v0.25.10, `da6fe9beb4f7f67beb75914ca8e0d48ae48d6406` |
-| `c/tree-sitter-delphi13` | a Delphi 13 grammar, generated (`parser.c`, `scanner.c`) | [Alexl-git/tree-sitter-delphi13](https://github.com/Alexl-git/tree-sitter-delphi13), MIT | v1.3.0 |
+| `c/tree-sitter-delphi13` | a Delphi 13 grammar, generated (`parser.c`, `scanner.c`) | [Alexl-git/tree-sitter-delphi13](https://github.com/Alexl-git/tree-sitter-delphi13), MIT | v1.4.0 |
 
 Each folder keeps its project's `LICENSE`.  
 `c/tree-sitter/exports.def` lists the API's functions, for building `tree-sitter.dll`; the

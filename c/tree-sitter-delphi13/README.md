@@ -1,7 +1,7 @@
 # tree-sitter-delphi13
 
 The Delphi 13 grammar's generated parser (`src/parser.c`, `src/scanner.c`, `src/tree_sitter/`),
-v1.3.0, unchanged.
+v1.4.0, unchanged.
 
 The grammar is originally from
 [Alexl-git/tree-sitter-delphi13](https://github.com/Alexl-git/tree-sitter-delphi13), by
