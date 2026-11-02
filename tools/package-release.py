@@ -13,6 +13,7 @@ then:
 """
 import hashlib
 import pathlib
+import re
 import sys
 import zipfile
 
@@ -28,6 +29,18 @@ LICENCES = {
     'licenses/tree-sitter-delphi13-LICENSE': ROOT / 'c' / 'tree-sitter-delphi13' / 'LICENSE',
     'licenses/TreeSitter4D-LICENSE': ROOT / 'LICENSE',
 }
+
+
+def version_of(folder):
+    """The version a c\\ folder's README states, so a zip's can't go stale."""
+    text = (ROOT / 'c' / folder / 'README.md').read_text(encoding='utf-8')
+    m = re.search(r'\bv\d+\.\d+\.\d+\b', text)
+    if not m:
+        sys.exit(f'no version in c/{folder}/README.md')
+    return m.group()
+
+
+VERSIONS = f"tree-sitter {version_of('tree-sitter')} and tree-sitter-delphi13 {version_of('tree-sitter-delphi13')}"
 OBJECTS_TXT = f"""TreeSitter4D {VER}: the C, compiled, for Delphi's {{$L}}
 
 Unzip into the repository's root, beside delphi\\, so these land in obj\\
@@ -41,7 +54,7 @@ where delphi\\TreeSitter.Api.pas links them:
 Then dcc64 or dcc32 builds delphi\\TsWalk.dpr with nothing else: no C
 compiler, and no DLLs at run time.
 
-tree-sitter and tree-sitter-delphi13 are MIT (licenses\\).
+{VERSIONS}, both MIT (licenses\\).
 """
 DLLS_TXT = f"""TreeSitter4D {VER}: the C, compiled, as DLLs
 
@@ -56,7 +69,7 @@ binding that loads tree-sitter.dll and a grammar DLL can use them too.
 The Win64 DLLs need the Universal C Runtime (part of Windows 10 and later);
 the Win32 ones only KERNEL32 and USER32.
 
-tree-sitter and tree-sitter-delphi13 are MIT (licenses\\).
+{VERSIONS}, both MIT (licenses\\).
 """
 OBJECTS = {f'obj/{n}': OBJ / n for n in ('ts_lib.o', 'delphi13_parser.o', 'delphi13_scanner.o')} | \
           {f'obj/win32/{n}': OBJ / 'win32' / n
