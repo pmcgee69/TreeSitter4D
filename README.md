@@ -88,7 +88,8 @@ obj\tswalk23.exe   <file or folder>...      rem C++23
 
 - **Delphi** (`delphi\`): `TreeSitter.Api.pas` declares the C API and links the objects with
   `{$L}` (Win64 or Win32), or with `TS_DLL` defined takes it from the DLLs; `TreeSitter.pas`
-  puts a parser class, a tree class and a node record over it; `TsWalk.dpr` is the walker.
+  puts a parser class, a tree class, a node record and queries over it; `TsWalk.dpr` is the
+  walker, `TsQuery.dpr` runs a query ([below](#queries)).
 - **C++17** (`cpp\tswalk.cpp`): tree-sitter's own `api.h`, the same objects.
 - **C++23** (`cpp\tswalk23.cpp`): same, using `std::print`, `std::expected`, ranges,
   and `std::unique_ptr` for C handle ownership.
@@ -103,6 +104,25 @@ line:
 ```
 
 The 37 are the grammar's misreadings, not bugs in the RTL. Delphi groups them correctly, by definition.
+
+### Queries
+
+Tree-sitter's query engine is part of the runtime (`lib.c` includes `query.c`), so a query file
+such as a grammar's `highlights.scm` runs from Delphi too. `TreeSitter.pas` has `TTSQuery`, a
+compiled query (it raises `ETSQuery` with the error's kind and byte offset), and
+`TTSQueryCursor`, which runs it over a node, optionally within a byte range, one capture at a
+time in the order of the text.
+
+```
+obj\TsQuery.exe <query.scm> <file or folder>...   rem every capture: positions, pattern, @name, text
+```
+
+With tree-sitter-delphi13 v1.4.0's own `queries/highlights.scm`, over the RTL's
+`source\rtl\sys` and `delphi\`'s two units: 354,956 captures, the same as py-tree-sitter 0.25.2's
+on the same grammar DLL, in every file, and the same from Win64, Win64 with `TS_DLL` and Win32.
+On `System.SysUtils.pas` (1.1 MB): parse 112 ms, the query over the whole file 36 ms, over a
+60-line window 0.22 ms. The C library doesn't evaluate predicates (`#match?`, `#eq?`); that
+query has none, and a query that has them needs the caller to check them.
 
 ## And in Delf
 

@@ -35,6 +35,25 @@ type
     Column : UInt32;
   end;
 
+  // queries (tree-sitter's query.c, which lib.c includes)
+  TSQuery       = Pointer;
+  TSQueryCursor = Pointer;
+  TSQueryError  = UInt32;   // a C enum: 4 bytes, where a Delphi enumeration would be 1
+
+  // 40 bytes on Win64 (the node's 32, the index, padding), 28 on Win32
+  TSQueryCapture = record
+    Node  : TSNode;
+    Index : UInt32;
+  end;
+  PSQueryCapture = ^TSQueryCapture;
+
+  TSQueryMatch = record
+    Id           : UInt32;
+    PatternIndex : UInt16;
+    CaptureCount : UInt16;
+    Captures     : PSQueryCapture;
+  end;
+
 const
   // a C name as linked: Win32's C names begin with an underscore
 {$IF Defined(WIN32) and not Defined(TS_DLL)}
@@ -42,6 +61,13 @@ const
 {$ELSE}
   TS_C = '';
 {$ENDIF}
+  TSQueryErrorNone      = 0;
+  TSQueryErrorSyntax    = 1;
+  TSQueryErrorNodeType  = 2;
+  TSQueryErrorField     = 3;
+  TSQueryErrorCapture   = 4;
+  TSQueryErrorStructure = 5;
+  TSQueryErrorLanguage  = 6;
 {$IFDEF TS_DLL}
   TS_RUNTIME = 'tree-sitter.dll';
   TS_GRAMMAR = 'tree-sitter-delphi13.dll';
@@ -79,6 +105,34 @@ function  ts_node_child(Node: TSNode; Index: UInt32): TSNode; cdecl;
 function  ts_node_child_by_field_name(Node: TSNode; Name: PByte;
             Length: UInt32): TSNode; cdecl;
             external {$IFDEF TS_DLL}TS_RUNTIME{$ENDIF} name TS_C + 'ts_node_child_by_field_name';
+
+function  ts_node_end_point(Node: TSNode): TSPoint; cdecl;
+            external {$IFDEF TS_DLL}TS_RUNTIME{$ENDIF} name TS_C + 'ts_node_end_point';
+
+function  ts_query_new(Language: TSLanguage; Source: PByte; SourceLength: UInt32;
+            out ErrorOffset: UInt32; out ErrorType: TSQueryError): TSQuery; cdecl;
+            external {$IFDEF TS_DLL}TS_RUNTIME{$ENDIF} name TS_C + 'ts_query_new';
+procedure ts_query_delete(Query: TSQuery); cdecl;
+            external {$IFDEF TS_DLL}TS_RUNTIME{$ENDIF} name TS_C + 'ts_query_delete';
+function  ts_query_pattern_count(Query: TSQuery): UInt32; cdecl;
+            external {$IFDEF TS_DLL}TS_RUNTIME{$ENDIF} name TS_C + 'ts_query_pattern_count';
+function  ts_query_capture_count(Query: TSQuery): UInt32; cdecl;
+            external {$IFDEF TS_DLL}TS_RUNTIME{$ENDIF} name TS_C + 'ts_query_capture_count';
+function  ts_query_capture_name_for_id(Query: TSQuery; Index: UInt32;
+            out Length: UInt32): PAnsiChar; cdecl;
+            external {$IFDEF TS_DLL}TS_RUNTIME{$ENDIF} name TS_C + 'ts_query_capture_name_for_id';
+function  ts_query_cursor_new: TSQueryCursor; cdecl;
+            external {$IFDEF TS_DLL}TS_RUNTIME{$ENDIF} name TS_C + 'ts_query_cursor_new';
+procedure ts_query_cursor_delete(Cursor: TSQueryCursor); cdecl;
+            external {$IFDEF TS_DLL}TS_RUNTIME{$ENDIF} name TS_C + 'ts_query_cursor_delete';
+procedure ts_query_cursor_exec(Cursor: TSQueryCursor; Query: TSQuery; Node: TSNode); cdecl;
+            external {$IFDEF TS_DLL}TS_RUNTIME{$ENDIF} name TS_C + 'ts_query_cursor_exec';
+function  ts_query_cursor_set_byte_range(Cursor: TSQueryCursor;
+            StartByte, EndByte: UInt32): Boolean; cdecl;
+            external {$IFDEF TS_DLL}TS_RUNTIME{$ENDIF} name TS_C + 'ts_query_cursor_set_byte_range';
+function  ts_query_cursor_next_capture(Cursor: TSQueryCursor; out Match: TSQueryMatch;
+            out CaptureIndex: UInt32): Boolean; cdecl;
+            external {$IFDEF TS_DLL}TS_RUNTIME{$ENDIF} name TS_C + 'ts_query_cursor_next_capture';
 
 function  tree_sitter_delphi13: TSLanguage; cdecl;
             external {$IFDEF TS_DLL}TS_GRAMMAR{$ENDIF} name TS_C + 'tree_sitter_delphi13';
