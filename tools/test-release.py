@@ -3,9 +3,12 @@ holding the repository's delphi\\ sources and the zips' contents, nothing
 else; dcc64 and dcc32 build the walker from the objects, and with TS_DLL
 against the DLLs; each runs over the RTL's source\\rtl\\common and must report
 
-    99 files, 1537727 nodes, 37 misgrouped <
+    99 files, 1538475 nodes, 0 misgrouped <
 
-    python tools\\test-release.py 0.1.0 [dist dir] [rtl folder]
+(37 misgrouped < up to 0.2.0, with tree-sitter-delphi13 v1.4.0; none since v1.4.6's
+own token for a generic's <.)
+
+    python tools\\test-release.py 0.3.0 [dist dir] [rtl folder]
 
 The RTL folder defaults to Delphi 13's (Studio 37.0).
 """
@@ -23,7 +26,7 @@ VER = sys.argv[1]
 DIST = pathlib.Path(sys.argv[2]) if len(sys.argv) > 2 else ROOT / 'dist'
 RTL = sys.argv[3] if len(sys.argv) > 3 else \
     r'C:\Program Files (x86)\Embarcadero\Studio\37.0\source\rtl\common'
-EXPECT = '99 files, 1537727 nodes, 37 misgrouped <'
+EXPECT = '99 files, 1538475 nodes, 0 misgrouped <'
 
 T = pathlib.Path(tempfile.mkdtemp(prefix='ts4d-release-'))
 (T / 'delphi').mkdir()

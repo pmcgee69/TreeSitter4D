@@ -21,7 +21,7 @@ You don't need Node, Rust or Python to build it: the grammar's parser is the C t
 | Folder | What | From | Version |
 |---|---|---|---|
 | `c/tree-sitter` | the runtime (`src/`, `include/`) | [tree-sitter/tree-sitter](https://github.com/tree-sitter/tree-sitter), MIT | v0.25.10, `da6fe9beb4f7f67beb75914ca8e0d48ae48d6406` |
-| `c/tree-sitter-delphi13` | a Delphi 13 grammar, generated (`parser.c`, `scanner.c`) | [Alexl-git/tree-sitter-delphi13](https://github.com/Alexl-git/tree-sitter-delphi13), MIT | v1.4.0 |
+| `c/tree-sitter-delphi13` | a Delphi 13 grammar, generated (`parser.c`, `scanner.c`) | [Alexl-git/tree-sitter-delphi13](https://github.com/Alexl-git/tree-sitter-delphi13), MIT | v1.4.11 |
 
 Each folder keeps its project's `LICENSE`.  
 `c/tree-sitter/exports.def` lists the API's functions, for building `tree-sitter.dll`; the
@@ -43,7 +43,7 @@ nothing but Delphi is needed:
 
 Each zip has the licences, and the release lists their SHA-256 sums. Tried from a folder
 holding only `delphi\` and the zips' contents: dcc64 and dcc32, objects and DLLs, all four
-report the same 37 as below.
+report the same line as below.
 
 ### Making a release
 
@@ -52,9 +52,9 @@ From a RAD Studio command prompt, with Python:
 ```
 build-c.cmd dll
 build-c.cmd win32 dll
-python tools\package-release.py 0.2.0     rem dist\: the two zips and SHA256SUMS.txt
-python tools\test-release.py 0.2.0        rem as a Delphi-only user would: all four must give the 37
-gh release create v0.2.0 dist\*           rem with notes saying what changed
+python tools\package-release.py 0.3.0     rem dist\: the two zips and SHA256SUMS.txt
+python tools\test-release.py 0.3.0        rem as a Delphi-only user would: all four must give the line below
+gh release create v0.3.0 dist\*           rem with notes saying what changed
 ```
 
 ## Building the C
@@ -98,12 +98,17 @@ Over the Delphi 13 RTL's `source\rtl\common` (99 files), all three report the sa
 line:
 
 ```
-99 files, 1537727 nodes, 37 misgrouped <, 853-868 ms     (Delphi)
-99 files, 1537727 nodes, 37 misgrouped <, 928-939 ms     (C++17)
-99 files, 1537727 nodes, 37 misgrouped <, 909-917 ms     (C++23)
+99 files, 1538475 nodes, 0 misgrouped <, 883-892 ms      (Delphi)
+99 files, 1538475 nodes, 0 misgrouped <, 967-1064 ms     (C++17)
+99 files, 1538475 nodes, 0 misgrouped <, 951-967 ms      (C++23)
 ```
 
-The 37 are the grammar's misreadings, not bugs in the RTL. Delphi groups them correctly, by definition.
+None, since tree-sitter-delphi13 v1.4.6. Up to v1.4.0 (TreeSitter4D 0.2.0) the same folder gave
+**37 misgrouped <** (1,537,727 nodes): the grammar's misreadings, not bugs in the RTL, which
+v1.4.6 fixed by giving a generic's `<` a token of its own, decided by looking ahead for its
+`>`, so every other `<` is a comparison that binds as `=` and `>` do. The walker is kept as
+the check that they stay fixed. The times are four runs each on 14 Nov 2026; earlier figures
+here were from another day and aren't comparable.
 
 ### Queries
 
@@ -117,10 +122,12 @@ time in the order of the text.
 obj\TsQuery.exe <query.scm> <file or folder>...   rem every capture: positions, pattern, @name, text
 ```
 
-With tree-sitter-delphi13 v1.4.0's own `queries/highlights.scm`, over the RTL's
-`source\rtl\sys` and `delphi\`'s two units: 354,956 captures, the same as py-tree-sitter 0.25.2's
-on the same grammar DLL, in every file, and the same from Win64, Win64 with `TS_DLL` and Win32.
-On `System.SysUtils.pas` (1.1 MB): parse 112 ms, the query over the whole file 36 ms, over a
+With tree-sitter-delphi13's own `queries/highlights.scm` (the same file in v1.4.0 and v1.4.11),
+over the RTL's `source\rtl\sys` and `delphi\`'s two units: on v1.4.11, 354,976 captures from
+Win64, the same as py-tree-sitter 0.25.2's on the same grammar DLL, in every file (counted
+through `QueryCursor.matches`: its `captures` lists a node captured by two patterns under one
+name differently). On v1.4.0 it was 354,956, the same from Win64, Win64 with `TS_DLL` and Win32;
+and on `System.SysUtils.pas` (1.1 MB): parse 112 ms, the query over the whole file 36 ms, over a
 60-line window 0.22 ms. The C library doesn't evaluate predicates (`#match?`, `#eq?`); that
 query has none, and a query that has them needs the caller to check them.
 
@@ -149,7 +156,8 @@ build-delf.cmd
 obj\delf\TsWalk.exe <file or folder>...
 ```
 
-It reports the same 37, line for line, in 954-958 ms with `Children` building an array per node.
+It reports the same line, in 1104-1142 ms (14 Nov, four runs) with `Children` building an array
+per node.
 Other approaches are being examined as well.
 
 ## Building the two Delphi walkers with Delphi alone
@@ -167,7 +175,7 @@ dcc64 -B -E..\obj -NU..\obj\dcu "-NSSystem;Winapi" TsWalk.dpr
 ```
 
 For Win32, dcc32 the same way, into folders of its own (say `-E..\obj\w32 -NU..\obj\dcu32`).
-Over `source\rtl\common` it reports the same 37.
+Over `source\rtl\common` it reports the same line.
 
 The Delf walker, from delfc's output: the same, plus `-U` for `TreeSitter.Api.pas`, which it
 shares with the hand-written one:
@@ -192,7 +200,8 @@ command prompt:
 msbuild TreeSitter4D.groupproj
 ```
 
-(Tried from an empty `obj\`: the C objects, then all four walkers, which report the same 37.)
+(Tried from an empty `obj\` with the grammar's v1.4.0: the C objects, then all four walkers,
+which reported the same as each other.)
 
 ## Credits
 
