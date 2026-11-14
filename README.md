@@ -193,15 +193,24 @@ the sources.) `build-programs.cmd` and `build-delf.cmd` run exactly these.
 Open **`TreeSitter4D.groupproj`**: the four walkers in one project group, the two Delphi
 projects (Win64) and the two C++Builder ones (Win64x, C++17 and C++23), building into the same
 `obj\` folders as the scripts, in Release by default. Each runs `build-c.cmd` first if the C
-objects aren't there yet, so **Build All** works from a fresh clone. The same from a RAD Studio
-command prompt:
+objects aren't there yet, so **Build All** works from a fresh clone. The same from the command
+line, with msbuild:
 
 ```
-msbuild TreeSitter4D.groupproj
+build-msbuild.cmd                    rem Release; any msbuild arguments after it, /p:Config=Debug
 ```
 
-(Tried from an empty `obj\` with the grammar's v1.4.0: the C objects, then all four walkers,
-which reported the same as each other.)
+It calls `rsvars.bat` if it isn't a RAD Studio command prompt, and runs
+`msbuild TreeSitter4D.groupproj`. Plain `msbuild` can fail on the two C++Builder projects with
+`'stdlib.h' file not found` while the IDE builds them: msbuild reads the IDE's paths from
+`%APPDATA%\Embarcadero\BDS\37.0\EnvOptions.proj`, which can hold Delphi's paths and none of
+C++Builder's, and the IDE keeps C++Builder's in the registry. So `tools\cpp-paths.ps1` writes
+`obj\EnvOptions-cpp.proj`, which imports `EnvOptions.proj` and adds the registry's Win64x C++
+paths where it has none, and msbuild is given that instead.
+
+(Tried from a fresh clone with an empty `obj\`, the grammar's v1.4.11, on a machine whose
+`EnvOptions.proj` had no C++Builder paths: the C objects, then all four walkers, which report
+the same 0 misgrouped `<`.)
 
 ## Credits
 
