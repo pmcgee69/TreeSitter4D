@@ -7,7 +7,7 @@ unit TreeSitter;
 interface
 
 uses
-  System.SysUtils, TreeSitter.Api;
+  System.SysUtils, System.Generics.Collections, TreeSitter.Api;
 
 type
   TTSNode = record
@@ -28,17 +28,28 @@ type
     function Line: Integer;                        // from 1
     function StartPoint: TSPoint;                  // row and column (bytes) from 0
     function EndPoint: TSPoint;
+    property Raw: TSNode read FNode;               // for TreeSitter.Api's functions
   end;
 
   TTSTree = class
   private
-    FTree   : TSTree;
-    FSource : TBytes;
+    FTree    : TSTree;
+    FSource  : TBytes;
+    FParents : TDictionary<Pointer, TSNode>;   // a node's id -> its parent; built when first asked
+    procedure BuildParents;
   public
     constructor Create(Tree: TSTree; const Source: TBytes);
     destructor Destroy; override;
     function Root: TTSNode;
     function Text(const Node: TTSNode): string;
+    // a node's parent (IsNull for the root). tree-sitter's nodes don't hold their parent, and
+    // ts_node_parent searches down from the root each time; here the first call walks the tree
+    // once with a cursor and keeps a table, and each call after is a lookup (System.SysUtils,
+    // 204,062 nodes: every node's parent 5.9 s by ts_node_parent, 0.6 s by a table, in
+    // Python). The table costs a dictionary entry per node, kept until the tree is freed
+    function Parent(const Node: TTSNode): TTSNode;
+    // the parent, its parent, ... up to the root: "which routine is this in?"
+    function Ancestors(const Node: TTSNode): TArray<TTSNode>;
   end;
 
   TTSParser = class
@@ -177,8 +188,66 @@ end;
 
 destructor TTSTree.Destroy;
 begin
+  FParents.Free;
   ts_tree_delete(FTree);
   inherited;
+end;
+
+procedure TTSTree.BuildParents;
+begin
+  FParents := TDictionary<Pointer, TSNode>.Create;
+  var Cursor := ts_tree_cursor_new(ts_tree_root_node(FTree));
+  const Way = TList<TSNode>.Create;   // the root down to the cursor's node
+  try
+    Way.Add(ts_tree_cursor_current_node(Cursor));
+    while True do
+    begin
+      if ts_tree_cursor_goto_first_child(Cursor) then
+      begin
+        const N = ts_tree_cursor_current_node(Cursor);
+        FParents.AddOrSetValue(N.Id, Way.Last);
+        Way.Add(N);
+        Continue;
+      end;
+      // no children: the next sibling, or up until there is one
+      while True do
+      begin
+        if Way.Count = 1 then
+          Exit;                       // back at the root: every node seen
+        Way.Delete(Way.Count - 1);
+        if ts_tree_cursor_goto_next_sibling(Cursor) then
+        begin
+          const N = ts_tree_cursor_current_node(Cursor);
+          FParents.AddOrSetValue(N.Id, Way.Last);
+          Way.Add(N);
+          Break;
+        end;
+        ts_tree_cursor_goto_parent(Cursor);
+      end;
+    end;
+  finally
+    Way.Free;
+    ts_tree_cursor_delete(Cursor);
+  end;
+end;
+
+function TTSTree.Parent(const Node: TTSNode): TTSNode;
+begin
+  if FParents = nil then
+    BuildParents;
+  if not FParents.TryGetValue(Node.FNode.Id, Result.FNode) then
+    Result.FNode := Default(TSNode);  // the root, or a node of another tree: null
+end;
+
+function TTSTree.Ancestors(const Node: TTSNode): TArray<TTSNode>;
+begin
+  Result := nil;
+  var N := Parent(Node);
+  while not N.IsNull do
+  begin
+    Result := Result + [N];
+    N := Parent(N);
+  end;
 end;
 
 function TTSTree.Root: TTSNode;
