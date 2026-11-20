@@ -18,7 +18,10 @@ type
     function IsNull: Boolean;
     function HasError: Boolean;
     function ChildCount: Integer;
-    function Child(Index: Integer): TTSNode;
+    function Child(Index: Integer): TTSNode;       // counts from the first child: see Children
+    // every child, in order, by a tree cursor: each step constant, where Child(I) in a loop is
+    // quadratic in the number of children (a unit of 3,000 statements in one routine, say)
+    function Children: TArray<TTSNode>;
     function Field(const Name: string): TTSNode;   // IsNull when it isn't there
     function StartByte: Integer;
     function EndByte: Integer;
@@ -111,6 +114,25 @@ end;
 function TTSNode.Child(Index: Integer): TTSNode;
 begin
   Result.FNode := ts_node_child(FNode, Index);
+end;
+
+function TTSNode.Children: TArray<TTSNode>;
+begin
+  SetLength(Result, ts_node_child_count(FNode));
+  if Length(Result) = 0 then
+    Exit;
+  var Cursor := ts_tree_cursor_new(FNode);
+  try
+    var I := 0;
+    if ts_tree_cursor_goto_first_child(Cursor) then
+      repeat
+        Result[I].FNode := ts_tree_cursor_current_node(Cursor);
+        Inc(I);
+      until (I = Length(Result)) or not ts_tree_cursor_goto_next_sibling(Cursor);
+    SetLength(Result, I);
+  finally
+    ts_tree_cursor_delete(Cursor);
+  end;
 end;
 
 function TTSNode.Field(const Name: string): TTSNode;

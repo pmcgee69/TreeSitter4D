@@ -1,7 +1,8 @@
 unit TreeSitter.Api;
 
 { The part of tree-sitter's C API (tree_sitter/api.h) these programs use, and
-  the Delphi 13 grammar.
+  the Delphi 13 grammar. Another unit can't add to it: Delphi links the
+  objects' functions only for externals declared in the unit that has the $L.
 
   By default the C is linked into the executable with $L: no DLLs. The
   objects are compiled by C++Builder (build-c.cmd): bcc64x for Win64
@@ -33,6 +34,28 @@ type
   TSPoint = record
     Row    : UInt32;
     Column : UInt32;
+  end;
+
+  // a walk of a tree that keeps its way down: its next sibling and its parent in constant time,
+  // where ts_node_child(N, I) counts from N's first child (so a loop over a node's children by
+  // index is quadratic in their number) and ts_node_parent searches down from the root. 24 bytes
+  // on Win64, 20 on Win32; its functions take it by address, and ts_tree_cursor_delete frees
+  // what it holds
+  TSTreeCursor = record
+    Tree    : Pointer;
+    Id      : Pointer;
+    Context : array[0..2] of UInt32;
+  end;
+
+  // an edit of the text, for ts_tree_edit before a parse given the old tree: bytes and points
+  // before and after (36 bytes)
+  TSInputEdit = record
+    StartByte   : UInt32;
+    OldEndByte  : UInt32;
+    NewEndByte  : UInt32;
+    StartPoint  : TSPoint;
+    OldEndPoint : TSPoint;
+    NewEndPoint : TSPoint;
   end;
 
   // queries (tree-sitter's query.c, which lib.c includes)
@@ -108,6 +131,43 @@ function  ts_node_child_by_field_name(Node: TSNode; Name: PByte;
 
 function  ts_node_end_point(Node: TSNode): TSPoint; cdecl;
             external {$IFDEF TS_DLL}TS_RUNTIME{$ENDIF} name TS_C + 'ts_node_end_point';
+// the child that holds (or follows) a byte, and the smallest node spanning a byte range: one
+// pass down, not a search of each node's children
+function  ts_node_first_child_for_byte(Node: TSNode; Byte: UInt32): TSNode; cdecl;
+            external {$IFDEF TS_DLL}TS_RUNTIME{$ENDIF} name TS_C + 'ts_node_first_child_for_byte';
+function  ts_node_descendant_for_byte_range(Node: TSNode; StartByte, EndByte: UInt32): TSNode; cdecl;
+            external {$IFDEF TS_DLL}TS_RUNTIME{$ENDIF} name TS_C + 'ts_node_descendant_for_byte_range';
+// a node's parent: found by searching down from the root, so a walk that looks up often is
+// better done with a cursor, or a table of parents built on the way down
+function  ts_node_parent(Node: TSNode): TSNode; cdecl;
+            external {$IFDEF TS_DLL}TS_RUNTIME{$ENDIF} name TS_C + 'ts_node_parent';
+
+function  ts_tree_cursor_new(Node: TSNode): TSTreeCursor; cdecl;
+            external {$IFDEF TS_DLL}TS_RUNTIME{$ENDIF} name TS_C + 'ts_tree_cursor_new';
+procedure ts_tree_cursor_delete(var Cursor: TSTreeCursor); cdecl;
+            external {$IFDEF TS_DLL}TS_RUNTIME{$ENDIF} name TS_C + 'ts_tree_cursor_delete';
+procedure ts_tree_cursor_reset(var Cursor: TSTreeCursor; Node: TSNode); cdecl;
+            external {$IFDEF TS_DLL}TS_RUNTIME{$ENDIF} name TS_C + 'ts_tree_cursor_reset';
+function  ts_tree_cursor_current_node(const [ref] Cursor: TSTreeCursor): TSNode; cdecl;
+            external {$IFDEF TS_DLL}TS_RUNTIME{$ENDIF} name TS_C + 'ts_tree_cursor_current_node';
+function  ts_tree_cursor_current_field_name(const [ref] Cursor: TSTreeCursor): PAnsiChar; cdecl;
+            external {$IFDEF TS_DLL}TS_RUNTIME{$ENDIF} name TS_C + 'ts_tree_cursor_current_field_name';
+function  ts_tree_cursor_current_depth(const [ref] Cursor: TSTreeCursor): UInt32; cdecl;
+            external {$IFDEF TS_DLL}TS_RUNTIME{$ENDIF} name TS_C + 'ts_tree_cursor_current_depth';
+function  ts_tree_cursor_goto_parent(var Cursor: TSTreeCursor): Boolean; cdecl;
+            external {$IFDEF TS_DLL}TS_RUNTIME{$ENDIF} name TS_C + 'ts_tree_cursor_goto_parent';
+function  ts_tree_cursor_goto_first_child(var Cursor: TSTreeCursor): Boolean; cdecl;
+            external {$IFDEF TS_DLL}TS_RUNTIME{$ENDIF} name TS_C + 'ts_tree_cursor_goto_first_child';
+function  ts_tree_cursor_goto_next_sibling(var Cursor: TSTreeCursor): Boolean; cdecl;
+            external {$IFDEF TS_DLL}TS_RUNTIME{$ENDIF} name TS_C + 'ts_tree_cursor_goto_next_sibling';
+// to the first child holding or after the byte: its index, or -1 for none
+function  ts_tree_cursor_goto_first_child_for_byte(var Cursor: TSTreeCursor; Byte: UInt32): Int64; cdecl;
+            external {$IFDEF TS_DLL}TS_RUNTIME{$ENDIF} name TS_C + 'ts_tree_cursor_goto_first_child_for_byte';
+
+// the old tree told of an edit, then given to ts_parser_parse_string as OldTree: what didn't
+// change is reused, and parsing is quicker
+procedure ts_tree_edit(Tree: TSTree; const [ref] Edit: TSInputEdit); cdecl;
+            external {$IFDEF TS_DLL}TS_RUNTIME{$ENDIF} name TS_C + 'ts_tree_edit';
 
 function  ts_query_new(Language: TSLanguage; Source: PByte; SourceLength: UInt32;
             out ErrorOffset: UInt32; out ErrorType: TSQueryError): TSQuery; cdecl;

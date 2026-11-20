@@ -59,8 +59,8 @@ begin
   var Kind := Node.Kind;
   if (Kind = 'exprBinary') or (Kind = 'exprUnary') then
     Check(Tree, Node);
-  for var I := 0 to Node.ChildCount - 1 do
-    Walk(Tree, Node.Child(I));
+  for var C in Node.Children do
+    Walk(Tree, C);
 end;
 
 procedure WalkFile(Parser: TTSParser; const FileName: string);
