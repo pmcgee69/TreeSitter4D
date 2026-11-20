@@ -8,7 +8,7 @@ against the DLLs; each runs over the RTL's source\\rtl\\common and must report
 (37 misgrouped < up to 0.2.0, with tree-sitter-delphi13 v1.4.0; none since v1.4.6's
 own token for a generic's <.)
 
-    python tools\\test-release.py 0.3.0 [dist dir] [rtl folder]
+    python tools\\test-release.py 0.3.1 [dist dir] [rtl folder]
 
 The RTL folder defaults to Delphi 13's (Studio 37.0).
 """
