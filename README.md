@@ -52,9 +52,9 @@ From a RAD Studio command prompt, with Python:
 ```
 build-c.cmd dll
 build-c.cmd win32 dll
-python tools\package-release.py 0.3.0     rem dist\: the two zips and SHA256SUMS.txt
-python tools\test-release.py 0.3.0        rem as a Delphi-only user would: all four must give the line below
-gh release create v0.3.0 dist\*           rem with notes saying what changed
+python tools\package-release.py 0.3.1     rem dist\: the two zips and SHA256SUMS.txt
+python tools\test-release.py 0.3.1        rem as a Delphi-only user would: all four must give the line below
+gh release create v0.3.1 dist\*           rem with notes saying what changed
 ```
 
 ## Building the C
