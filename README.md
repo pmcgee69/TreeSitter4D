@@ -21,7 +21,7 @@ You don't need Node, Rust or Python to build it: the grammar's parser is the C t
 | Folder | What | From | Version |
 |---|---|---|---|
 | `c/tree-sitter` | the runtime (`src/`, `include/`) | [tree-sitter/tree-sitter](https://github.com/tree-sitter/tree-sitter), MIT | v0.25.10, `da6fe9beb4f7f67beb75914ca8e0d48ae48d6406` |
-| `c/tree-sitter-delphi13` | a Delphi 13 grammar, generated (`parser.c`, `scanner.c`) | [Alexl-git/tree-sitter-delphi13](https://github.com/Alexl-git/tree-sitter-delphi13), MIT | v1.4.11 |
+| `c/tree-sitter-delphi13` | a Delphi 13 grammar, generated (`parser.c`, `scanner.c`) | [Alexl-git/tree-sitter-delphi13](https://github.com/Alexl-git/tree-sitter-delphi13), MIT | v1.4.14, `6cbc96ccf0ad56e0159b79ac51f46a7ed069c1cb` |
 
 Each folder keeps its project's `LICENSE`.  
 `c/tree-sitter/exports.def` lists the API's functions, for building `tree-sitter.dll`; the
@@ -122,8 +122,8 @@ time in the order of the text.
 obj\TsQuery.exe <query.scm> <file or folder>...   rem every capture: positions, pattern, @name, text
 ```
 
-With tree-sitter-delphi13's own `queries/highlights.scm` (the same file in v1.4.0 and v1.4.11),
-over the RTL's `source\rtl\sys` and `delphi\`'s two units: on v1.4.11, 354,976 captures from
+With tree-sitter-delphi13's own `queries/highlights.scm` (the same file from v1.4.0 to v1.4.14),
+over the RTL's `source\rtl\sys` and `delphi\`'s two units: on v1.4.11 and v1.4.14, 354,976 captures from
 Win64, the same as py-tree-sitter 0.25.2's on the same grammar DLL, in every file (counted
 through `QueryCursor.matches`: its `captures` lists a node captured by two patterns under one
 name differently). On v1.4.0 it was 354,956, the same from Win64, Win64 with `TS_DLL` and Win32;
